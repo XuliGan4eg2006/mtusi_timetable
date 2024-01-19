@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "153270274296",
+    "project_id": "mtusi-timetable",
+    "storage_bucket": "mtusi-timetable.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:153270274296:android:e718cf89f89a777d1c530d",
+        "android_client_info": {
+          "package_name": "com.rm_rf.mtusi_timetable"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD29cF-kSJdUVr6wFoXXrlu2KfJHY435to"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
