@@ -13,6 +13,7 @@ import android.provider.Settings.Global.getString
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,6 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,13 +60,17 @@ import com.example.mtusi_timetable.ui.theme.Mtusi_timetableTheme
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import kotlin.math.absoluteValue
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            TimeTable(this)
+            SelectGroup(this)
         }
     }
 }
@@ -162,16 +168,34 @@ fun Greeting(context: Context) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectGroup(context: Context){
-    Box(modifier = Modifier.background(Color.Gray).fillMaxSize()) {
-        val groupList = listOf("group1", "group2", "group3")
+    Box(modifier = Modifier
+        .background(Color.Gray)
+        .fillMaxSize()) {
+
+        val groupList = remember { mutableListOf<String>()}
+        var isReady by remember { mutableStateOf(false)}
+        //getting data via makeRequest
+        LaunchedEffect(true) {
+            val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "")})
+            val groups = result.getJSONArray("groups")
+
+            Log.i("groups", groups.toString())
+
+            for (i in 0 until groups.length()) {
+                groupList.add(groups.getString(i))
+            }
+            isReady = true
+        }
 
         Column(
             modifier = Modifier.align(Alignment.Center)
         ) {
-            Text(text = "Select Group")
             var expanded by remember { mutableStateOf(false) }
             var selectedIndex by remember { mutableIntStateOf(0) }
 
+            Text(text = "Select Group")
+
+            AnimatedVisibility(visible = isReady) {
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = {
@@ -185,11 +209,14 @@ fun SelectGroup(context: Context){
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier.menuAnchor()
                 )
-                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    groupList.forEachIndexed { index, s ->
-                        DropdownMenuItem(
-                            onClick = { selectedIndex = index; expanded = false },
-                            text = { Text(text = s) })
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }) {
+                        groupList.forEachIndexed { index, s ->
+                            DropdownMenuItem(
+                                onClick = { selectedIndex = index; expanded = false },
+                                text = { Text(text = s) })
+                        }
                     }
                 }
             }
@@ -199,6 +226,8 @@ fun SelectGroup(context: Context){
 
 @Composable
 fun TimeTable(context: Context) {
+    val testData = Thread{ makeRequest(context, "")}.start()
+
     Box(modifier = Modifier
         .fillMaxSize()
         .background(Color.Gray)) {
