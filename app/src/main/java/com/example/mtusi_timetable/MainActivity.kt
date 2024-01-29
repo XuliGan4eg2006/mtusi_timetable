@@ -22,10 +22,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -49,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
@@ -196,28 +199,33 @@ fun SelectGroup(context: Context){
             Text(text = "Select Group")
 
             AnimatedVisibility(visible = isReady) {
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = {
-                    expanded = !expanded
-                }
-            ) {
-                TextField(
-                    value = groupList[selectedIndex],
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor()
-                )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }) {
-                        groupList.forEachIndexed { index, s ->
-                            DropdownMenuItem(
-                                onClick = { selectedIndex = index; expanded = false },
-                                text = { Text(text = s) })
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    modifier = Modifier.padding(top = 10.dp),
+                    onExpandedChange = {
+                        expanded = !expanded
+                    }
+                ) {
+                    TextField(
+                        value = groupList[selectedIndex],
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier.menuAnchor()
+                    )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }) {
+                            groupList.forEachIndexed { index, s ->
+                                DropdownMenuItem(
+                                    onClick = { selectedIndex = index; expanded = false },
+                                    text = { Text(text = s) })
+                            }
                         }
                     }
+
+                Button(modifier = Modifier.padding(top = 70.dp),onClick = { }) {
+                    Text(text = "Submit")
                 }
             }
         }
