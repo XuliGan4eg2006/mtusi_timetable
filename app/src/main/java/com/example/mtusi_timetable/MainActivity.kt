@@ -19,9 +19,11 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,9 +31,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,15 +47,19 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,9 +69,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
@@ -71,6 +83,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mtusi_timetable.ui.theme.Mtusi_timetableTheme
+import com.example.mtusi_timetable.ui.theme.grayCard
+import com.example.mtusi_timetable.ui.theme.sourceCodePro
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.RemoteMessage
@@ -252,41 +266,112 @@ fun SelectGroup(context: Context, navController: NavController) {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeTable(context: Context, navController: NavController) {
-    var classesList by remember { mutableStateOf(JSONObject()) }
+    val classes = remember { mutableStateListOf<String>() }
+    var requestReturn by remember { mutableStateOf(JSONObject()) }
+
+    val weekDays  = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
+    var selectedDay by remember { mutableStateOf(0)}
 
     LaunchedEffect(true){
-        val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "https://mpbacd483783c74564d7.free.beeceptor.com/timetable111")})
-
-        classesList = result
-        println(classesList)
+        val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "http://192.168.1.191:8000/timetable/lol")})
+        requestReturn = result
+        for (i in 0 until result.getJSONObject("ИСП9-123А").getJSONArray("0").length()) {
+            classes.add(result.getJSONObject("ИСП9-123А").getJSONArray("0").getString(i))
+        }
+        println(result)
     }
 
 //        if (classesList.isEmpty()) {
 //            Text(text = "Loading...")
 //        }
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.Black)) {
 //        Card(colors = CardDefaults.cardColors(containerColor = Color.DarkGray), modifier = Modifier.padding(top = 5.dp, start = 5.dp)) {
 //            Text(text = "TimeTable")
 //        }
-        CenterAlignedTopAppBar(title = { Text(text = "TimeTable") })
+        CenterAlignedTopAppBar(title = { Text(text = "TimeTable", color = Color.White) },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black), actions = {IconButton(onClick = {
+
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "settings menu"
+                )
+            }})
         Spacer(modifier = Modifier.height(5.dp))
-//        LazyColumn(
-//            modifier = Modifier.align(Alignment.CenterHorizontally),
-//            verticalArrangement = Arrangement.spacedBy(8.dp),
-//        ) {
-//            items(classesList) {
-//                Card(
-//                    colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
-//                    modifier = Modifier.size(width = 385.dp, height = 150.dp),
-//                    border = BorderStroke(1.dp, Color.Transparent)
-//                ) {
-//                    Text(text = it)
-//                }
-//            }
-//        }
+        
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)){
+            for (i in weekDays) {
+                item {
+                    if (i == weekDays[selectedDay]) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.Cyan),
+                        ) {
+                            Text(text = i, color = Color.White, fontSize = 40.sp, modifier = Modifier.clickable { selectedDay = weekDays.indexOf(i) })
+
+                        }
+                    } else {
+                        Text(text = i, color = Color.White, fontSize = 40.sp, modifier = Modifier.clickable {
+                            selectedDay = weekDays.indexOf(i)
+                            println("selectedDay: $selectedDay")
+
+                            classes.clear()
+
+                            for (z in 0 until requestReturn.getJSONObject("ИСП9-123А").getJSONArray(selectedDay.toString()).length()) {
+                                classes.add(requestReturn.getJSONObject("ИСП9-123А").getJSONArray(selectedDay.toString()).getString(z))
+                            }
+                        })
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(5.dp))
+        LazyColumn(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+
+            items(classes) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = grayCard),
+                    modifier = Modifier.size(width = 385.dp, height = 150.dp)
+                        .animateItemPlacement(),
+                    border = BorderStroke(1.dp, Color.Transparent)
+                ) {
+                        Row {
+                            Box(
+                                modifier = Modifier
+                                    .background(Color.Cyan)
+                                    .size(width = 50.dp, height = 150.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.book),
+                                    contentDescription = "book",
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .size(40.dp),
+                                    tint = Color.Gray
+                                )
+                            }
+
+                            Text(
+                                text = it,
+                                fontFamily = sourceCodePro,
+                                color = Color.White,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(top = 5.dp, start = 10.dp)
+                            )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -294,6 +379,7 @@ fun TimeTable(context: Context, navController: NavController) {
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
+    Log.i("checkNetwork", checkNetwork(context = LocalContext.current).toString())
 
     NavHost(navController = navController, startDestination = "TimeTable") {
         composable("HelloScreen") { Greeting(context = LocalContext.current) }
@@ -301,11 +387,3 @@ fun MainScreen() {
         composable("TimeTable") { TimeTable(context = LocalContext.current, navController = navController) }
     }
 }
-
-
-
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun GreetingPreview() {
-//    Greeting(LocalContext.current)
-//}
