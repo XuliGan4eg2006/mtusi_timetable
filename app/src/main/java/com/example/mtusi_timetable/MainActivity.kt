@@ -35,11 +35,14 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -73,6 +76,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.absoluteValue
@@ -187,7 +191,7 @@ fun SelectGroup(context: Context, navController: NavController) {
         var isReady by remember { mutableStateOf(false)}
         //getting data via makeRequest
         LaunchedEffect(true) {
-            val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "")})
+            val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "https://mpa2a30b2dbfc4722f6a.free.beeceptor.com/groups")})
             val groups = result.getJSONArray("groups")
 
             Log.i("groups", groups.toString())
@@ -248,34 +252,41 @@ fun SelectGroup(context: Context, navController: NavController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeTable(context: Context, navController: NavController) {
-    val testData = Thread{ makeRequest(context, "")}.start()
+    var classesList by remember { mutableStateOf(JSONObject()) }
 
-    val classesList by remember { mutableStateOf(listOf<String>("test", "test1", "test2")) }
+    LaunchedEffect(true){
+        val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "https://mpbacd483783c74564d7.free.beeceptor.com/timetable111")})
+
+        classesList = result
+        println(classesList)
+    }
 
 //        if (classesList.isEmpty()) {
 //            Text(text = "Loading...")
 //        }
     Column(modifier = Modifier.fillMaxSize()) {
-        Card(colors = CardDefaults.cardColors(containerColor = Color.DarkGray), modifier = Modifier.padding(top = 5.dp, start = 5.dp)) {
-            Text(text = "TimeTable")
-        }
-        Spacer(modifier = Modifier.height(20.dp))
-        LazyColumn(
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(classesList) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
-                    modifier = Modifier.size(width = 400.dp, height = 500.dp),
-                    border = BorderStroke(1.dp, Color.Transparent)
-                ) {
-                    Text(text = it)
-                }
-            }
-        }
+//        Card(colors = CardDefaults.cardColors(containerColor = Color.DarkGray), modifier = Modifier.padding(top = 5.dp, start = 5.dp)) {
+//            Text(text = "TimeTable")
+//        }
+        CenterAlignedTopAppBar(title = { Text(text = "TimeTable") })
+        Spacer(modifier = Modifier.height(5.dp))
+//        LazyColumn(
+//            modifier = Modifier.align(Alignment.CenterHorizontally),
+//            verticalArrangement = Arrangement.spacedBy(8.dp),
+//        ) {
+//            items(classesList) {
+//                Card(
+//                    colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
+//                    modifier = Modifier.size(width = 385.dp, height = 150.dp),
+//                    border = BorderStroke(1.dp, Color.Transparent)
+//                ) {
+//                    Text(text = it)
+//                }
+//            }
+//        }
     }
 }
 

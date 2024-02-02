@@ -19,7 +19,7 @@ fun checkNetwork(context: Context): Boolean {
 
 fun makeRequest(context: Context, url: String): String {
     val request = Request.Builder()
-        .url("https://mpa2a30b2dbfc4722f6a.free.beeceptor.com/groups")
+        .url(url)
         .build()
 
     client.newCall(request).execute().use { response ->
