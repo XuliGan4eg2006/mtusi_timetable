@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -98,11 +99,12 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 
 import org.json.JSONObject
 import kotlin.math.absoluteValue
 
-val serverUrl = "http://87.251.77.69:8000"
+val serverUrl = "http://192.168.1.191:8000"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -218,7 +220,9 @@ fun Greeting(context: Context, navController: NavController) {
                         painter = painterResource(id = R.drawable.bug),
                         colorFilter = ColorFilter.tint(leftStripColor),
                         contentDescription = "",
-                        modifier = Modifier.align(Alignment.CenterHorizontally).size(150.dp)
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .size(150.dp)
                     )
 
                     Text(
@@ -345,16 +349,18 @@ fun MutableList<String>.fillClassesAndBreaks(resultTimetable: JSONObject, result
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeTable(context: Context, navController: NavController) {
-    val classes = remember { mutableStateListOf<String>() }
+    val classes = remember { mutableStateListOf<String>() } //с прошлого решения
+
     var resultTimetable by remember { mutableStateOf(JSONObject()) }
 
     var resultBreaks by remember { mutableStateOf(JSONObject()) }
 
     val weekDays  = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
-    var selectedDay by remember { mutableStateOf(0) }
+    var selectedDay by remember { mutableIntStateOf(0) }
 
     //getting group from sharedPreferences
     val sharedPreferences = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
@@ -366,7 +372,6 @@ fun TimeTable(context: Context, navController: NavController) {
 
 
         classes.fillClassesAndBreaks(resultTimetable, resultBreaks, "0", group)
-        println(resultTimetable)
     }
 
 //        if (classesList.isEmpty()) {
@@ -417,17 +422,17 @@ fun TimeTable(context: Context, navController: NavController) {
             modifier = Modifier.align(Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-
             items(classes) {
                 when {
-                    "Конец" in it -> { }
+                    "Конец" in it -> {}
                     "Перемена" in it -> {
                         Card(
                             colors = CardDefaults.cardColors(containerColor = cardGreen),
                             modifier = Modifier
                                 .size(width = 385.dp, height = 33.dp)
                                 .animateItemPlacement(),
-                            border = BorderStroke(1.dp, Color.Transparent)) {
+                            border = BorderStroke(1.dp, Color.Transparent)
+                        ) {
                             Text(
                                 text = it,
                                 fontFamily = sourceCodePro,
@@ -440,6 +445,7 @@ fun TimeTable(context: Context, navController: NavController) {
                             )
                         }
                     }
+
                     else -> {
                         Card(
                             colors = CardDefaults.cardColors(containerColor = grayCard),
@@ -487,7 +493,170 @@ fun TimeTable(context: Context, navController: NavController) {
                 }
             }
         }
+    }
+}
 
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimeTable1(context: Context, navController: NavController) {
+    val classes = remember { mutableStateListOf<String>() }
+
+    var resultTimetable by remember { mutableStateOf(JSONObject()) }
+
+    var resultBreaks by remember { mutableStateOf(JSONObject()) }
+
+    val weekDays  = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
+    var selectedDay by remember { mutableIntStateOf(0) }
+
+    //getting group from sharedPreferences
+    val sharedPreferences = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+    val group = sharedPreferences.getString("group", "ИСП9-123А").toString()
+    var decodedMap by remember { mutableStateOf<Map<String, List<String>>?>(null) }
+
+    val pagerState = rememberPagerState(pageCount = {
+        weekDays.size
+    })
+    LaunchedEffect(true){
+        resultTimetable = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/timetableV1/${group}/")})
+        resultBreaks = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/breaks")})
+
+        decodedMap = Json{ignoreUnknownKeys = true}.decodeFromString<Map<String, List<String>>>(resultTimetable.toString())
+
+    }
+
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .background(backColor)) {
+
+        TopAppBar(title = { Text(text = "КТ МТУСИ РАСПИСАНИЕ", color = Color.White) },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = backColor), actions = {IconButton(onClick = {
+                navController.navigate("InfoScreen")
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "settings menu"
+                )
+            }})
+        Spacer(modifier = Modifier.height(5.dp))
+        val coroutineScope = rememberCoroutineScope()
+        val listState = rememberLazyListState()
+        LazyRow(state = listState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
+            .padding(start = 8.dp)) {
+            for (i in weekDays) {
+                item {
+                    if (i == weekDays[selectedDay]) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = cardGreen),
+                        ) {
+                            Text(text = i, color = Color.White, fontSize = 40.sp, modifier = Modifier.clickable { selectedDay = weekDays.indexOf(i) })
+
+                        }
+                    } else {
+                        Text(text = i, color = Color.White, fontSize = 40.sp, modifier = Modifier.clickable {
+                            selectedDay = weekDays.indexOf(i)
+                            println("selectedDay: $selectedDay")
+
+                            classes.clear()
+
+                            classes.fillClassesAndBreaks(resultTimetable, resultBreaks, selectedDay.toString(), group)
+                        })
+                    }
+                }
+            }
+            coroutineScope.launch {
+                listState.animateScrollToItem(index = selectedDay)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (decodedMap != null) {
+
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+
+        LazyColumn(
+            modifier = Modifier,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(decodedMap?.get(page.toString())!!) {
+                selectedDay = pagerState.currentPage
+                println(pagerState.currentPage)
+                when {
+                    "Конец" in it -> {}
+                    "Перемена" in it -> {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = cardGreen),
+                            modifier = Modifier
+                                .size(width = 385.dp, height = 33.dp)
+
+                                .animateItemPlacement(),
+                            border = BorderStroke(1.dp, Color.Transparent)
+                        ) {
+                            Text(
+                                text = it,
+                                fontFamily = sourceCodePro,
+                                color = Color.Black,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(top = 5.dp)
+                            )
+                        }
+                    }
+
+                    else -> {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = grayCard),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(150.dp)
+                                .animateItemPlacement(),
+                            border = BorderStroke(1.dp, Color.Transparent)
+                        ) {
+                            Row {
+                                Box(
+                                    modifier = Modifier
+                                        .background(leftStripColor)
+                                        .size(width = 50.dp, height = 150.dp)
+                                ) {
+                                    Icon(
+
+                                        painter = painterResource(
+                                            id = (if ("Физическая культура" in it) {
+                                                R.drawable.basketball
+                                            } else if ("Нет урока" in it) {
+                                                R.drawable.disabled
+                                            } else {
+                                                R.drawable.book
+                                            })
+                                        ),
+                                        contentDescription = "book",
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .size(40.dp),
+                                        tint = Color.Gray
+                                    )
+                                }
+
+                                Text(
+                                    text = it,
+                                    fontFamily = sourceCodePro,
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 5.dp, start = 10.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+                }
+            }
+        }
     }
 }
 
@@ -622,7 +791,7 @@ fun MainScreen() {
     NavHost(navController = navController, startDestination = "CheckConditions") {
         composable("HelloScreen") { Greeting(context = LocalContext.current, navController = navController) }
         composable("SelectGroup") { SelectGroup(context = LocalContext.current, navController = navController) }
-        composable("TimeTable") { TimeTable(context = LocalContext.current, navController = navController) }
+        composable("TimeTable") { TimeTable1(context = LocalContext.current, navController = navController) }
         composable("CheckConditions") { CheckConditions(context = LocalContext.current, navController = navController) }
         composable("InfoScreen") { InfoScreen(context = LocalContext.current ,navController = navController) }
     }
