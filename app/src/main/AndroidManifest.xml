@@ -10,15 +10,21 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="КТ МТУСИ"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Mtusi_timetable"
         tools:targetApi="31">
+        <meta-data android:name="io.sentry.dsn" android:value="https://97a7dec430cb9077bb91dd7a4e8f7968@us.sentry.io/4506694531153920" />
+        <meta-data android:name="io.sentry.traces.user-interaction.enable" android:value="true" />
+        <meta-data android:name="io.sentry.attach-screenshot" android:value="true" />
+        <meta-data android:name="io.sentry.attach-view-hierarchy" android:value="true" />
+        <meta-data android:name="io.sentry.traces.sample-rate" android:value="1.0" />
+        <meta-data android:name="io.sentry.traces.profiling.sample-rate" android:value="1.0" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
+            android:label="КТ МТУСИ"
             android:theme="@style/Theme.Mtusi_timetable">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -6,10 +6,11 @@ import android.Manifest
 import android.app.Activity
 import android.content.ContentValues.TAG
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings.Global.getString
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -36,24 +37,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,44 +59,59 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mtusi_timetable.ui.theme.Mtusi_timetableTheme
+import com.example.mtusi_timetable.ui.theme.backColor
+import com.example.mtusi_timetable.ui.theme.cardGreen
 import com.example.mtusi_timetable.ui.theme.grayCard
+import com.example.mtusi_timetable.ui.theme.leftStripColor
+import com.example.mtusi_timetable.ui.theme.logoColor1
+import com.example.mtusi_timetable.ui.theme.logoColor2
 import com.example.mtusi_timetable.ui.theme.sourceCodePro
+import com.example.mtusi_timetable.ui.theme.telegramColor
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.absoluteValue
+
+val serverUrl = "http://87.251.77.69:8000"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            MainScreen()
+            Mtusi_timetableTheme {
+                MainScreen()
+            }
         }
     }
 }
@@ -117,24 +129,13 @@ fun checkNotificationPermission(context: Context){
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Greeting(context: Context) {
-    //        checkNotificationPermission(context)
-    FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
-        if (!task.isSuccessful) {
-            Log.w(TAG, "Fetching FCM registration token failed", task.exception)
-            return@OnCompleteListener
-        }
-
-        // Get new FCM registration token
-        val token = task.result
-        Log.w(TAG, token.toString())
-    })
+fun Greeting(context: Context, navController: NavController) {
 
     Box(modifier = Modifier
         .fillMaxSize()
-        .background(Color.Gray)){
+        .background(backColor)){
 
-    val pagerState = rememberPagerState(pageCount = {3})
+    val pagerState = rememberPagerState(pageCount = {2})
 
     HorizontalPager(state = pagerState, modifier = Modifier.align(Alignment.Center)) { page ->
             when (page) {
@@ -152,8 +153,39 @@ fun Greeting(context: Context) {
                             fraction = 1f - pageOffset.coerceIn(0f, 1f)
                         )
                     }) {
-                    Text(text = "Page 1", modifier = Modifier.align(Alignment.CenterHorizontally), textAlign = TextAlign.Center)
-                    Image(painter = painterResource(id = R.drawable.ic_launcher_background), contentDescription = "", modifier = Modifier.align(Alignment.CenterHorizontally))
+                    Image(
+                        painter = painterResource(id = R.drawable.hello),
+                        contentDescription = "",
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Text(
+                        text = "Добро пожаловать в открытый бета тест первого приложения для рассписания КТ МТУСИ\n\nПожалуйста, разрешите уведомления на следующем экране, чтобы получать уведомления о заменах и событиях колледжа",
+                        fontFamily = sourceCodePro,
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 10.dp),
+                        textAlign = TextAlign.Center
+                    )
+
+                    val coroutineScope = rememberCoroutineScope()
+                    Button(modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = leftStripColor),
+                        onClick = {     coroutineScope.launch {
+                            pagerState.animateScrollToPage(1)
+                        } }) {
+
+                        Text(text = "Поехали!",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                            textAlign = TextAlign.Center)
+                    }
                 }
                 1 -> Column(modifier = Modifier
                     .fillMaxWidth()
@@ -169,27 +201,67 @@ fun Greeting(context: Context) {
                             fraction = 1f - pageOffset.coerceIn(0f, 1f)
                         )
                     }) {
-                    Text(text = "Page 2", modifier = Modifier.align(Alignment.CenterHorizontally), textAlign = TextAlign.Center)
-                    Image(painter = painterResource(id = R.drawable.ic_launcher_background), contentDescription = "", modifier = Modifier.align(Alignment.CenterHorizontally))
-                }
-                2 -> Column(modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer {
-                        val pageOffset = (
-                                (pagerState.currentPage - page) + pagerState
-                                    .currentPageOffsetFraction
-                                ).absoluteValue
 
-                        alpha = lerp(
-                            start = 0.5f,
-                            stop = 1f,
-                            fraction = 1f - pageOffset.coerceIn(0f, 1f)
-                        )
-                    }) {
-                    Text(text = "Page 3", modifier = Modifier.align(Alignment.CenterHorizontally), textAlign = TextAlign.Center)
-                    Image(painter = painterResource(id = R.drawable.ic_launcher_background), contentDescription = "", modifier = Modifier.align(Alignment.CenterHorizontally))
-                }
+                    checkNotificationPermission(context)
+                    FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+                        if (!task.isSuccessful) {
+                            Log.w(TAG, "Fetching FCM registration token failed", task.exception)
+                            return@OnCompleteListener
+                        }
 
+                        // Get new FCM registration token
+                        val token = task.result
+                        Log.w(TAG, token.toString())
+                    })
+
+                    Image(
+                        painter = painterResource(id = R.drawable.bug),
+                        colorFilter = ColorFilter.tint(leftStripColor),
+                        contentDescription = "",
+                        modifier = Modifier.align(Alignment.CenterHorizontally).size(150.dp)
+                    )
+
+                    Text(
+                        text = "Отлично, на следующем экране выберите вашу группу (позже вы сможете изменить её в настройках) \n\nЕсли вы нашли баг/недочёт или столкнулись с другой иной проблемой, пожалуйста, свяжитесь со мной через",
+                        fontFamily = sourceCodePro,
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "Telegram",
+                        fontFamily = sourceCodePro,
+                        color = telegramColor,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .clickable {
+                                context.startActivity(
+                                    Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse("https://t.me/circle_of_winds")
+                                    )
+                                )
+                            },
+                        textAlign = TextAlign.Center
+                    )
+
+                    Button(modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = leftStripColor),
+                        onClick = { navController.navigate("SelectGroup") }) {
+                        Text(text = "Начать пользоваться",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                            textAlign = TextAlign.Center)
+                    }
+                }
             }
         }
     }
@@ -198,14 +270,14 @@ fun Greeting(context: Context) {
 @Composable
 fun SelectGroup(context: Context, navController: NavController) {
     Box(modifier = Modifier
-        .background(Color.Gray)
+        .background(backColor)
         .fillMaxSize()) {
 
         val groupList = remember { mutableListOf<String>()}
         var isReady by remember { mutableStateOf(false)}
         //getting data via makeRequest
         LaunchedEffect(true) {
-            val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "https://mpa2a30b2dbfc4722f6a.free.beeceptor.com/groups")})
+            val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/groups")})
             val groups = result.getJSONArray("groups")
 
             Log.i("groups", groups.toString())
@@ -222,7 +294,7 @@ fun SelectGroup(context: Context, navController: NavController) {
             var expanded by remember { mutableStateOf(false) }
             var selectedIndex by remember { mutableIntStateOf(0) }
 
-            Text(text = "Select Group")
+            Text(text = "Выберите группу", color = Color.White)
 
             AnimatedVisibility(visible = isReady) {
                 ExposedDropdownMenuBox(
@@ -259,30 +331,42 @@ fun SelectGroup(context: Context, navController: NavController) {
                     Toast.makeText(context, "Group Updated", Toast.LENGTH_SHORT).show()
                     navController.navigate("TimeTable")
                 }) {
-                    Text(text = "Submit")
+                    Text(text = "Продолжить")
                 }
             }
         }
     }
 }
 
+fun MutableList<String>.fillClassesAndBreaks(resultTimetable: JSONObject, resultBreaks: JSONObject, dayNum: String, group: String) {
+    for (i in 0 until resultTimetable.getJSONObject(group).getJSONArray(dayNum).length()) {
+        this.add(resultTimetable.getJSONObject(group).getJSONArray(dayNum).getString(i))
+        this.add(resultBreaks.getJSONArray("breaks").getString(i))
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeTable(context: Context, navController: NavController) {
     val classes = remember { mutableStateListOf<String>() }
-    var requestReturn by remember { mutableStateOf(JSONObject()) }
+    var resultTimetable by remember { mutableStateOf(JSONObject()) }
+
+    var resultBreaks by remember { mutableStateOf(JSONObject()) }
 
     val weekDays  = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
-    var selectedDay by remember { mutableStateOf(0)}
+    var selectedDay by remember { mutableStateOf(0) }
+
+    //getting group from sharedPreferences
+    val sharedPreferences = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+    val group = sharedPreferences.getString("group", "ИСП9-123А").toString()
 
     LaunchedEffect(true){
-        val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "http://192.168.1.191:8000/timetable/lol")})
-        requestReturn = result
-        for (i in 0 until result.getJSONObject("ИСП9-123А").getJSONArray("0").length()) {
-            classes.add(result.getJSONObject("ИСП9-123А").getJSONArray("0").getString(i))
-        }
-        println(result)
+        resultTimetable = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/timetable/${group}/")})
+        resultBreaks = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/breaks")})
+
+
+        classes.fillClassesAndBreaks(resultTimetable, resultBreaks, "0", group)
+        println(resultTimetable)
     }
 
 //        if (classesList.isEmpty()) {
@@ -290,13 +374,11 @@ fun TimeTable(context: Context, navController: NavController) {
 //        }
     Column(modifier = Modifier
         .fillMaxSize()
-        .background(Color.Black)) {
-//        Card(colors = CardDefaults.cardColors(containerColor = Color.DarkGray), modifier = Modifier.padding(top = 5.dp, start = 5.dp)) {
-//            Text(text = "TimeTable")
-//        }
-        CenterAlignedTopAppBar(title = { Text(text = "TimeTable", color = Color.White) },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black), actions = {IconButton(onClick = {
+        .background(backColor)) {
 
+        TopAppBar(title = { Text(text = "КТ МТУСИ РАСПИСАНИЕ", color = Color.White) },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = backColor), actions = {IconButton(onClick = {
+                navController.navigate("InfoScreen")
             }) {
                 Icon(
                     imageVector = Icons.Filled.Settings,
@@ -304,13 +386,13 @@ fun TimeTable(context: Context, navController: NavController) {
                 )
             }})
         Spacer(modifier = Modifier.height(5.dp))
-        
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)){
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
+            .padding(start = 8.dp)) {
             for (i in weekDays) {
                 item {
                     if (i == weekDays[selectedDay]) {
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = Color.Cyan),
+                            colors = CardDefaults.cardColors(containerColor = cardGreen),
                         ) {
                             Text(text = i, color = Color.White, fontSize = 40.sp, modifier = Modifier.clickable { selectedDay = weekDays.indexOf(i) })
 
@@ -322,68 +404,226 @@ fun TimeTable(context: Context, navController: NavController) {
 
                             classes.clear()
 
-                            for (z in 0 until requestReturn.getJSONObject("ИСП9-123А").getJSONArray(selectedDay.toString()).length()) {
-                                classes.add(requestReturn.getJSONObject("ИСП9-123А").getJSONArray(selectedDay.toString()).getString(z))
-                            }
+                            classes.fillClassesAndBreaks(resultTimetable, resultBreaks, selectedDay.toString(), group)
                         })
                     }
                 }
             }
         }
         
-        Spacer(modifier = Modifier.height(5.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
         LazyColumn(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
 
             items(classes) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = grayCard),
-                    modifier = Modifier.size(width = 385.dp, height = 150.dp)
-                        .animateItemPlacement(),
-                    border = BorderStroke(1.dp, Color.Transparent)
-                ) {
-                        Row {
-                            Box(
-                                modifier = Modifier
-                                    .background(Color.Cyan)
-                                    .size(width = 50.dp, height = 150.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.book),
-                                    contentDescription = "book",
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .size(40.dp),
-                                    tint = Color.Gray
-                                )
-                            }
-
+                when {
+                    "Конец" in it -> { }
+                    "Перемена" in it -> {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = cardGreen),
+                            modifier = Modifier
+                                .size(width = 385.dp, height = 33.dp)
+                                .animateItemPlacement(),
+                            border = BorderStroke(1.dp, Color.Transparent)) {
                             Text(
                                 text = it,
                                 fontFamily = sourceCodePro,
-                                color = Color.White,
+                                color = Color.Black,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 5.dp, start = 10.dp)
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(top = 5.dp)
                             )
+                        }
+                    }
+                    else -> {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = grayCard),
+                            modifier = Modifier
+                                .size(width = 385.dp, height = 150.dp)
+                                .animateItemPlacement(),
+                            border = BorderStroke(1.dp, Color.Transparent)
+                        ) {
+                            Row {
+                                Box(
+                                    modifier = Modifier
+                                        .background(leftStripColor)
+                                        .size(width = 50.dp, height = 150.dp)
+                                ) {
+                                    Icon(
+
+                                        painter = painterResource(
+                                            id = (if ("Физическая культура" in it) {
+                                                R.drawable.basketball
+                                            } else if ("Нет урока" in it) {
+                                                R.drawable.disabled
+                                            } else {
+                                                R.drawable.book
+                                            })
+                                        ),
+                                        contentDescription = "book",
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .size(40.dp),
+                                        tint = Color.Gray
+                                    )
+                                }
+
+                                Text(
+                                    text = it,
+                                    fontFamily = sourceCodePro,
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 5.dp, start = 10.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
+
     }
 }
 
+@Composable
+fun InfoScreen(context: Context, navController: NavController) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(backColor)) {
+        Column(modifier = Modifier.align(Alignment.Center)) {
+            Image(
+                painter = painterResource(id = R.drawable.rm_rf),
+                contentDescription = "rm_rf logo",
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            val gradientColors = listOf(logoColor1, logoColor2, logoColor2)
+
+            Text(
+                text = buildAnnotatedString {append("Backend, Mobile app, Design \n by Иванов Дмитрий aka ")
+                    withStyle(
+                        SpanStyle(
+                            brush = Brush.linearGradient(
+                                colors = gradientColors
+                            )
+                        )
+                    ) {
+                        append("rm_rf")
+                    }},
+                fontFamily = sourceCodePro,
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                textAlign = TextAlign.Center
+            )
+            Button(modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(top = 10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = telegramColor),
+                onClick = { context.startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://t.me/circle_of_winds")
+                    )
+                ) }) {
+                Text(text = "Написать мне",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    textAlign = TextAlign.Center)
+            }
+
+            Button(modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(top = 10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = leftStripColor),
+                onClick = { navController.navigate("Timetable") }) {
+                Text(text = "Вернуться к расписанию",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    textAlign = TextAlign.Center)
+            }
+            Button(modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(top = 10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = leftStripColor),
+                onClick = { navController.navigate("SelectGroup") }) {
+                Text(text = "Выбрать группу",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    textAlign = TextAlign.Center)
+            }
+        }
+    }
+}
+@Composable
+fun CheckConditions(context: Context, navController: NavController) {
+ Box(modifier = Modifier
+     .fillMaxSize()
+     .background(backColor)) {
+     if (!checkNetwork(context = LocalContext.current)) {
+         Column(
+             modifier = Modifier
+                 .fillMaxWidth()
+                 .align(Alignment.Center)
+         ) {
+             Image(
+                 painter = painterResource(id = R.drawable.internet),
+                 contentDescription = "no internet",
+                 modifier = Modifier
+                     .align(Alignment.CenterHorizontally)
+                     .size(150.dp),
+                 colorFilter = ColorFilter.tint(leftStripColor)
+             )
+             Text(
+                 text = "Для работы приложения необходимо подключение к сети \nПожалуйста, подключитесь к сети и повторите попытку.",
+                 fontFamily = sourceCodePro,
+                 color = Color.White,
+                 fontSize = 15.sp,
+                 fontWeight = FontWeight.Bold,
+                 modifier = Modifier
+                     .align(Alignment.CenterHorizontally)
+                     .padding(top = 10.dp),
+                 textAlign = TextAlign.Center
+             )
+         }
+     }
+     else {
+         val sharedPreferences =
+             LocalContext.current.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+         val group = sharedPreferences.getString("group", "no").toString()
+
+         if (group == "no") {
+             navController.navigate("HelloScreen")
+         } else {
+             navController.navigate("TimeTable")
+         }
+     }
+ }
+}
 
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
     Log.i("checkNetwork", checkNetwork(context = LocalContext.current).toString())
 
-    NavHost(navController = navController, startDestination = "TimeTable") {
-        composable("HelloScreen") { Greeting(context = LocalContext.current) }
+
+    NavHost(navController = navController, startDestination = "CheckConditions") {
+        composable("HelloScreen") { Greeting(context = LocalContext.current, navController = navController) }
         composable("SelectGroup") { SelectGroup(context = LocalContext.current, navController = navController) }
         composable("TimeTable") { TimeTable(context = LocalContext.current, navController = navController) }
+        composable("CheckConditions") { CheckConditions(context = LocalContext.current, navController = navController) }
+        composable("InfoScreen") { InfoScreen(context = LocalContext.current ,navController = navController) }
     }
 }
