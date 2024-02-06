@@ -15,7 +15,13 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -68,7 +74,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -100,7 +105,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-
 import org.json.JSONObject
 import kotlin.math.absoluteValue
 
@@ -540,35 +544,44 @@ fun TimeTable1(context: Context, navController: NavController) {
                 )
             }})
         Spacer(modifier = Modifier.height(5.dp))
-        val coroutineScope = rememberCoroutineScope()
-        val listState = rememberLazyListState()
-        LazyRow(state = listState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
-            .padding(start = 8.dp)) {
-            for (i in weekDays) {
-                item {
-                    if (i == weekDays[selectedDay]) {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = cardGreen),
-                        ) {
-                            Text(text = i, color = Color.White, fontSize = 40.sp, modifier = Modifier.clickable { selectedDay = weekDays.indexOf(i) })
-
-                        }
-                    } else {
-                        Text(text = i, color = Color.White, fontSize = 40.sp, modifier = Modifier.clickable {
-                            selectedDay = weekDays.indexOf(i)
-                            println("selectedDay: $selectedDay")
-
-                            classes.clear()
-
-                            classes.fillClassesAndBreaks(resultTimetable, resultBreaks, selectedDay.toString(), group)
-                        })
-                    }
-                }
-            }
-            coroutineScope.launch {
-                listState.animateScrollToItem(index = selectedDay)
+        AnimatedContent(targetState = selectedDay, transitionSpec = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.End,
+                animationSpec = tween(durationMillis = 1000)
+            ) togetherWith fadeOut()
+        },
+            label = "",contentAlignment = Alignment.Center) { targetIndex ->
+            Card(
+                colors = CardDefaults.cardColors(containerColor = cardGreen),
+                modifier = Modifier.padding(start = 10.dp)
+            ) {
+                Text(text = weekDays[targetIndex], color = Color.White, fontSize = 40.sp, modifier = Modifier.padding(start = 10.dp, end = 10.dp))
             }
         }
+//        LazyRow(state = listState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
+//            .padding(start = 8.dp)) {
+//            for (i in weekDays) {
+//                item {
+//                    if (i == weekDays[selectedDay]) {
+//                        Card(
+//                            colors = CardDefaults.cardColors(containerColor = cardGreen),
+//                        ) {
+//                            Text(text = i, color = Color.White, fontSize = 40.sp) //modifier = Modifier.clickable { selectedDay = weekDays.indexOf(i) }
+//                        }
+//                    } else {
+//                        Text(text = i, color = Color.White, fontSize = 40.sp)
+//                    //                        , modifier = Modifier.clickable {
+////                            selectedDay = weekDays.indexOf(i)
+////                            println("selectedDay: $selectedDay")
+////
+////                            classes.clear()
+////
+////                            classes.fillClassesAndBreaks(resultTimetable, resultBreaks, selectedDay.toString(), group)
+////                        })
+//                    }
+//                }
+//            }
+//        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -589,7 +602,8 @@ fun TimeTable1(context: Context, navController: NavController) {
                         Card(
                             colors = CardDefaults.cardColors(containerColor = cardGreen),
                             modifier = Modifier
-                                .size(width = 385.dp, height = 33.dp)
+                                .fillMaxWidth()
+                                .height(33.dp)
 
                                 .animateItemPlacement(),
                             border = BorderStroke(1.dp, Color.Transparent)
@@ -622,27 +636,33 @@ fun TimeTable1(context: Context, navController: NavController) {
                                         .background(leftStripColor)
                                         .size(width = 50.dp, height = 150.dp)
                                 ) {
-                                    Icon(
-
-                                        painter = painterResource(
-                                            id = (if ("Физическая культура" in it) {
-                                                R.drawable.basketball
-                                            } else if ("Нет урока" in it) {
-                                                R.drawable.disabled
-                                            } else {
-                                                R.drawable.book
-                                            })
-                                        ),
-                                        contentDescription = "book",
-                                        modifier = Modifier
-                                            .align(Alignment.Center)
-                                            .size(40.dp),
-                                        tint = Color.Gray
-                                    )
+                                    Column(modifier = Modifier.align(Alignment.Center).fillMaxWidth()) {
+                                        Icon(
+                                            painter = painterResource(
+                                                id = (if ("Физическая культура" in it) {
+                                                    R.drawable.basketball
+                                                } else if ("Нет урока" in it) {
+                                                    R.drawable.disabled
+                                                } else {
+                                                    R.drawable.book
+                                                })
+                                            ),
+                                            contentDescription = "book",
+                                            modifier = Modifier
+                                                .size(40.dp).align(Alignment.CenterHorizontally),
+                                            tint = Color.Gray
+                                        )
+                                        Text(text = it.split("~")[1].replace(" ", "").replace("\n", "").replace("/", "\n").replace("None", ""),
+                                            fontFamily = sourceCodePro,
+                                            color = Color.Black,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Justify,
+                                            modifier = Modifier.padding(top = if("/" in it.split("~")[1]){15.dp} else 30.dp).align(Alignment.CenterHorizontally))
+                                    }
                                 }
-
                                 Text(
-                                    text = it,
+                                    text = it.split("~")[0],
                                     fontFamily = sourceCodePro,
                                     color = Color.White,
                                     fontSize = 15.sp,
