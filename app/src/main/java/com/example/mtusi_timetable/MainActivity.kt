@@ -103,7 +103,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlin.math.absoluteValue
 
-const val serverUrl = "http://192.168.1.191:8000"
+const val serverUrl = "http://87.251.77.69:8000"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

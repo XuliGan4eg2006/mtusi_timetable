@@ -14,8 +14,8 @@ android {
         applicationId = "com.rm_rf.mtusi_timetable"
         minSdk = 29
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.1"
+        versionCode = 2
+        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -56,7 +56,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("androidx.compose.material3:material3:1.1.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("androidx.compose.ui:ui-util:1.6.0")
+    implementation("androidx.compose.ui:ui-util")
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("androidx.core:core-ktx:1.12.0")
