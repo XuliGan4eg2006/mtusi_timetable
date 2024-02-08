@@ -5,7 +5,6 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.json.JSONObject
 import java.io.IOException
 
 
@@ -17,7 +16,7 @@ fun checkNetwork(context: Context): Boolean {
     return networkCapabilities != null && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 }
 
-fun makeRequest(context: Context, url: String): String {
+fun makeRequest(url: String): String {
     val request = Request.Builder()
         .url(url)
         .build()

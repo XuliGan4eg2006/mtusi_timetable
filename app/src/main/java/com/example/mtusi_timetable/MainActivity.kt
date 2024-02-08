@@ -18,7 +18,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -38,9 +37,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -63,7 +60,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -105,10 +101,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import org.json.JSONObject
 import kotlin.math.absoluteValue
 
-val serverUrl = "http://192.168.1.191:8000"
+const val serverUrl = "http://192.168.1.191:8000"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -129,13 +124,14 @@ fun checkNotificationPermission(context: Context){
         }
     }
     else{
-        println("Have Permission")
+        Log.i("NotificationStatus","Have Permission")
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Greeting(context: Context, navController: NavController) {
+fun Greeting(navController: NavController) {
+    val context = LocalContext.current
 
     Box(modifier = Modifier
         .fillMaxSize()
@@ -149,7 +145,7 @@ fun Greeting(context: Context, navController: NavController) {
                     .fillMaxWidth()
                     .graphicsLayer {
                         val pageOffset = (
-                                (pagerState.currentPage - page) + pagerState
+                                (pagerState.currentPage) + pagerState
                                     .currentPageOffsetFraction
                                 ).absoluteValue
 
@@ -238,6 +234,7 @@ fun Greeting(context: Context, navController: NavController) {
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                         textAlign = TextAlign.Center
                     )
+
                     Text(
                         text = "Telegram",
                         fontFamily = sourceCodePro,
@@ -276,7 +273,9 @@ fun Greeting(context: Context, navController: NavController) {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SelectGroup(context: Context, navController: NavController) {
+fun SelectGroup(navController: NavController) {
+    val context = LocalContext.current
+
     Box(modifier = Modifier
         .background(backColor)
         .fillMaxSize()) {
@@ -285,13 +284,12 @@ fun SelectGroup(context: Context, navController: NavController) {
         var isReady by remember { mutableStateOf(false)}
         //getting data via makeRequest
         LaunchedEffect(true) {
-            val result = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/groups")})
-            val groups = result.getJSONArray("groups")
+            val jsonHandler = Json{this.ignoreUnknownKeys = true}
 
-            Log.i("groups", groups.toString())
+            val result = jsonHandler.decodeFromString<Map<String, List<String>>>(withContext(Dispatchers.IO){makeRequest("${serverUrl}/groups")})
 
-            for (i in 0 until groups.length()) {
-                groupList.add(groups.getString(i))
+            for (i in 0 until result["groups"]!!.size) {
+                groupList.add(result["groups"]!![i])
             }
             isReady = true
         }
@@ -346,172 +344,14 @@ fun SelectGroup(context: Context, navController: NavController) {
     }
 }
 
-fun MutableList<String>.fillClassesAndBreaks(resultTimetable: JSONObject, resultBreaks: JSONObject, dayNum: String, group: String) {
-    for (i in 0 until resultTimetable.getJSONObject(group).getJSONArray(dayNum).length()) {
-        this.add(resultTimetable.getJSONObject(group).getJSONArray(dayNum).getString(i))
-        this.add(resultBreaks.getJSONArray("breaks").getString(i))
-    }
-}
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimeTable(context: Context, navController: NavController) {
-    val classes = remember { mutableStateListOf<String>() } //с прошлого решения
+fun TimeTable(navController: NavController) {
+    val context = LocalContext.current
 
-    var resultTimetable by remember { mutableStateOf(JSONObject()) }
+    var resultTimetable by remember { mutableStateOf(String()) }
 
-    var resultBreaks by remember { mutableStateOf(JSONObject()) }
-
-    val weekDays  = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
-    var selectedDay by remember { mutableIntStateOf(0) }
-
-    //getting group from sharedPreferences
-    val sharedPreferences = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
-    val group = sharedPreferences.getString("group", "ИСП9-123А").toString()
-
-    LaunchedEffect(true){
-        resultTimetable = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/timetable/${group}/")})
-        resultBreaks = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/breaks")})
-
-
-        classes.fillClassesAndBreaks(resultTimetable, resultBreaks, "0", group)
-    }
-
-//        if (classesList.isEmpty()) {
-//            Text(text = "Loading...")
-//        }
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(backColor)) {
-
-        TopAppBar(title = { Text(text = "КТ МТУСИ РАСПИСАНИЕ", color = Color.White) },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = backColor), actions = {IconButton(onClick = {
-                navController.navigate("InfoScreen")
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = "settings menu"
-                )
-            }})
-        Spacer(modifier = Modifier.height(5.dp))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
-            .padding(start = 8.dp)) {
-            for (i in weekDays) {
-                item {
-                    if (i == weekDays[selectedDay]) {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = cardGreen),
-                        ) {
-                            Text(text = i, color = Color.White, fontSize = 40.sp, modifier = Modifier.clickable { selectedDay = weekDays.indexOf(i) })
-
-                        }
-                    } else {
-                        Text(text = i, color = Color.White, fontSize = 40.sp, modifier = Modifier.clickable {
-                            selectedDay = weekDays.indexOf(i)
-                            println("selectedDay: $selectedDay")
-
-                            classes.clear()
-
-                            classes.fillClassesAndBreaks(resultTimetable, resultBreaks, selectedDay.toString(), group)
-                        })
-                    }
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyColumn(
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(classes) {
-                when {
-                    "Конец" in it -> {}
-                    "Перемена" in it -> {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = cardGreen),
-                            modifier = Modifier
-                                .size(width = 385.dp, height = 33.dp)
-                                .animateItemPlacement(),
-                            border = BorderStroke(1.dp, Color.Transparent)
-                        ) {
-                            Text(
-                                text = it,
-                                fontFamily = sourceCodePro,
-                                color = Color.Black,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(top = 5.dp)
-                            )
-                        }
-                    }
-
-                    else -> {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = grayCard),
-                            modifier = Modifier
-                                .size(width = 385.dp, height = 150.dp)
-                                .animateItemPlacement(),
-                            border = BorderStroke(1.dp, Color.Transparent)
-                        ) {
-                            Row {
-                                Box(
-                                    modifier = Modifier
-                                        .background(leftStripColor)
-                                        .size(width = 50.dp, height = 150.dp)
-                                ) {
-                                    Icon(
-
-                                        painter = painterResource(
-                                            id = (if ("Физическая культура" in it) {
-                                                R.drawable.basketball
-                                            } else if ("Нет урока" in it) {
-                                                R.drawable.disabled
-                                            } else {
-                                                R.drawable.book
-                                            })
-                                        ),
-                                        contentDescription = "book",
-                                        modifier = Modifier
-                                            .align(Alignment.Center)
-                                            .size(40.dp),
-                                        tint = Color.Gray
-                                    )
-                                }
-
-                                Text(
-                                    text = it,
-                                    fontFamily = sourceCodePro,
-                                    color = Color.White,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = 5.dp, start = 10.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TimeTable1(context: Context, navController: NavController) {
-    val classes = remember { mutableStateListOf<String>() }
-
-    var resultTimetable by remember { mutableStateOf(JSONObject()) }
-
-    var resultBreaks by remember { mutableStateOf(JSONObject()) }
-
-    val weekDays  = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
+    val weekDays = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
     var selectedDay by remember { mutableIntStateOf(0) }
 
     //getting group from sharedPreferences
@@ -522,158 +362,172 @@ fun TimeTable1(context: Context, navController: NavController) {
     val pagerState = rememberPagerState(pageCount = {
         weekDays.size
     })
-    LaunchedEffect(true){
-        resultTimetable = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/timetableV1/${group}/")})
-        resultBreaks = JSONObject(withContext(Dispatchers.IO){makeRequest(context, "${serverUrl}/breaks")})
-
-        decodedMap = Json{ignoreUnknownKeys = true}.decodeFromString<Map<String, List<String>>>(resultTimetable.toString())
-
+    LaunchedEffect(true) {
+        resultTimetable = withContext(Dispatchers.IO) {
+            makeRequest(
+                "${serverUrl}/timetableV1/${group}/"
+            )
+        }
+        val jsonHandler = Json { this.ignoreUnknownKeys = true }
+        decodedMap = jsonHandler.decodeFromString<Map<String, List<String>>>(
+            resultTimetable
+        )
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(backColor)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backColor)
+    ) {
 
         TopAppBar(title = { Text(text = "КТ МТУСИ РАСПИСАНИЕ", color = Color.White) },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = backColor), actions = {IconButton(onClick = {
-                navController.navigate("InfoScreen")
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = "settings menu"
-                )
-            }})
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = backColor), actions = {
+                IconButton(onClick = {
+                    navController.navigate("InfoScreen")
+                }) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = "settings menu"
+                    )
+                }
+            })
         Spacer(modifier = Modifier.height(5.dp))
-        AnimatedContent(targetState = selectedDay, transitionSpec = {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(durationMillis = 1000)
-            ) togetherWith fadeOut()
-        },
-            label = "",contentAlignment = Alignment.Center) { targetIndex ->
+        AnimatedContent(
+            targetState = selectedDay, transitionSpec = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(durationMillis = 1000)
+                ) togetherWith fadeOut()
+            },
+            label = "", contentAlignment = Alignment.Center
+        ) { targetIndex ->
             Card(
                 colors = CardDefaults.cardColors(containerColor = cardGreen),
                 modifier = Modifier.padding(start = 10.dp)
             ) {
-                Text(text = weekDays[targetIndex], color = Color.White, fontSize = 40.sp, modifier = Modifier.padding(start = 10.dp, end = 10.dp))
+                Text(
+                    text = weekDays[targetIndex],
+                    color = Color.White,
+                    fontSize = 40.sp,
+                    modifier = Modifier.padding(start = 10.dp, end = 10.dp)
+                )
             }
         }
-//        LazyRow(state = listState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
-//            .padding(start = 8.dp)) {
-//            for (i in weekDays) {
-//                item {
-//                    if (i == weekDays[selectedDay]) {
-//                        Card(
-//                            colors = CardDefaults.cardColors(containerColor = cardGreen),
-//                        ) {
-//                            Text(text = i, color = Color.White, fontSize = 40.sp) //modifier = Modifier.clickable { selectedDay = weekDays.indexOf(i) }
-//                        }
-//                    } else {
-//                        Text(text = i, color = Color.White, fontSize = 40.sp)
-//                    //                        , modifier = Modifier.clickable {
-////                            selectedDay = weekDays.indexOf(i)
-////                            println("selectedDay: $selectedDay")
-////
-////                            classes.clear()
-////
-////                            classes.fillClassesAndBreaks(resultTimetable, resultBreaks, selectedDay.toString(), group)
-////                        })
-//                    }
-//                }
-//            }
-//        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         if (decodedMap != null) {
 
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
 
-        LazyColumn(
-            modifier = Modifier,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(decodedMap?.get(page.toString())!!) {
-                selectedDay = pagerState.currentPage
-                println(pagerState.currentPage)
-                when {
-                    "Конец" in it -> {}
-                    "Перемена" in it -> {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = cardGreen),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(33.dp)
+                LazyColumn(
+                    modifier = Modifier,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(decodedMap?.get(page.toString())!!) {
 
-                                .animateItemPlacement(),
-                            border = BorderStroke(1.dp, Color.Transparent)
-                        ) {
-                            Text(
-                                text = it,
-                                fontFamily = sourceCodePro,
-                                color = Color.Black,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(top = 5.dp)
-                            )
-                        }
-                    }
+                        selectedDay = pagerState.currentPage
 
-                    else -> {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = grayCard),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(150.dp)
-                                .animateItemPlacement(),
-                            border = BorderStroke(1.dp, Color.Transparent)
-                        ) {
-                            Row {
-                                Box(
+                        //getting text between ~ and #
+                        val regex = Regex("(?<=~)(.*?)(?=#)")
+                        val matchResult = regex.find(it)
+                        val classRoom = matchResult?.value?.replace(" ", "")?.replace("\n", "") ?: ""
+
+                        when {
+                            "Конец" in it -> {}
+                            "Перемена" in it -> {
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = cardGreen),
                                     modifier = Modifier
-                                        .background(leftStripColor)
-                                        .size(width = 50.dp, height = 150.dp)
+                                        .fillMaxWidth()
+                                        .height(33.dp)
+
+                                        .animateItemPlacement(),
+                                    border = BorderStroke(1.dp, Color.Transparent)
                                 ) {
-                                    Column(modifier = Modifier.align(Alignment.Center).fillMaxWidth()) {
-                                        Icon(
-                                            painter = painterResource(
-                                                id = (if ("Физическая культура" in it) {
-                                                    R.drawable.basketball
-                                                } else if ("Нет урока" in it) {
-                                                    R.drawable.disabled
-                                                } else {
-                                                    R.drawable.book
-                                                })
-                                            ),
-                                            contentDescription = "book",
+                                    Text(
+                                        text = it,
+                                        fontFamily = sourceCodePro,
+                                        color = Color.Black,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier
+                                            .align(Alignment.CenterHorizontally)
+                                            .padding(top = 5.dp)
+                                    )
+                                }
+                            }
+
+                            else -> {
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = grayCard),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(150.dp)
+                                        .animateItemPlacement(),
+                                    border = BorderStroke(1.dp, Color.Transparent)
+                                ) {
+                                    Row {
+                                        Box(
                                             modifier = Modifier
-                                                .size(40.dp).align(Alignment.CenterHorizontally),
-                                            tint = Color.Gray
-                                        )
-                                        Text(text = it.split("~")[1].replace(" ", "").replace("\n", "").replace("/", "\n").replace("None", ""),
-                                            fontFamily = sourceCodePro,
-                                            color = Color.Black,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            textAlign = TextAlign.Justify,
-                                            modifier = Modifier.padding(top = if("/" in it.split("~")[1]){15.dp} else 30.dp).align(Alignment.CenterHorizontally))
+                                                .background(leftStripColor)
+                                                .size(width = 50.dp, height = 150.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(
+                                                    id = (if ("Физическая культура" in it) {
+                                                        R.drawable.basketball
+                                                    } else if ("Нет урока" in it) {
+                                                        R.drawable.disabled
+                                                    } else {
+                                                        R.drawable.book
+                                                    })
+                                                ),
+                                                contentDescription = "book",
+                                                modifier = Modifier
+                                                    .size(65.dp)
+                                                    .align(Alignment.TopCenter)
+                                                    .padding(top = 20.dp),
+                                                tint = Color.Gray
+                                            )
+                                            Text(
+                                                text = classRoom.replace("\n", "")
+                                                    .replace("/", "\n")
+                                                    .replace("None", ""),
+                                                fontFamily = sourceCodePro,
+                                                color = Color.Black,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                textAlign = TextAlign.Justify,
+                                                modifier = Modifier
+                                                    .align(Alignment.BottomCenter)
+                                                    .padding(bottom = 15.dp)
+                                            )
+
+                                        }
+                                        Box(modifier = Modifier.fillMaxSize()) {
+                                            Text(
+                                                text = it.split("~")[0],
+                                                fontFamily = sourceCodePro,
+                                                color = Color.White,
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.align(Alignment.TopStart).padding(start = 10.dp, top = 5.dp)
+                                            )
+                                            Text(
+                                                text = it.split("#")[1].replace(" ", ""),
+                                                fontFamily = sourceCodePro,
+                                                color = Color.White,
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.align(Alignment.BottomStart).padding(start = 10.dp, bottom = 5.dp)
+                                            )
+                                        }
                                     }
                                 }
-                                Text(
-                                    text = it.split("~")[0],
-                                    fontFamily = sourceCodePro,
-                                    color = Color.White,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = 5.dp, start = 10.dp)
-                                )
                             }
                         }
                     }
-                }
-            }
                 }
             }
         }
@@ -681,7 +535,9 @@ fun TimeTable1(context: Context, navController: NavController) {
 }
 
 @Composable
-fun InfoScreen(context: Context, navController: NavController) {
+fun InfoScreen(navController: NavController) {
+    val context = LocalContext.current
+
     Box(modifier = Modifier
         .fillMaxSize()
         .background(backColor)) {
@@ -757,11 +613,12 @@ fun InfoScreen(context: Context, navController: NavController) {
     }
 }
 @Composable
-fun CheckConditions(context: Context, navController: NavController) {
- Box(modifier = Modifier
-     .fillMaxSize()
-     .background(backColor)) {
-     if (!checkNetwork(context = LocalContext.current)) {
+fun CheckConditions(navController: NavController) {
+    val context = LocalContext.current
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(backColor)) {
+     if (!checkNetwork(context = context)) {
          Column(
              modifier = Modifier
                  .fillMaxWidth()
@@ -792,27 +649,31 @@ fun CheckConditions(context: Context, navController: NavController) {
          val sharedPreferences =
              LocalContext.current.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
          val group = sharedPreferences.getString("group", "no").toString()
-
+    
          if (group == "no") {
              navController.navigate("HelloScreen")
          } else {
              navController.navigate("TimeTable")
          }
      }
- }
+    }
 }
 
 @Composable
 fun MainScreen() {
-    val navController = rememberNavController()
-    Log.i("checkNetwork", checkNetwork(context = LocalContext.current).toString())
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .background(backColor)) {
+        val navController = rememberNavController()
+        Log.i("checkNetwork", checkNetwork(context = LocalContext.current).toString())
 
 
-    NavHost(navController = navController, startDestination = "CheckConditions") {
-        composable("HelloScreen") { Greeting(context = LocalContext.current, navController = navController) }
-        composable("SelectGroup") { SelectGroup(context = LocalContext.current, navController = navController) }
-        composable("TimeTable") { TimeTable1(context = LocalContext.current, navController = navController) }
-        composable("CheckConditions") { CheckConditions(context = LocalContext.current, navController = navController) }
-        composable("InfoScreen") { InfoScreen(context = LocalContext.current ,navController = navController) }
+        NavHost(navController = navController, startDestination = "CheckConditions") {
+            composable("HelloScreen") { Greeting(navController = navController) }
+            composable("SelectGroup") { SelectGroup(navController = navController) }
+            composable("TimeTable") { TimeTable(navController = navController) }
+            composable("CheckConditions") { CheckConditions(navController = navController) }
+            composable("InfoScreen") { InfoScreen(navController = navController) }
+        }
     }
 }
