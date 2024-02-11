@@ -60,6 +60,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -100,7 +101,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
+import org.json.JSONObject
 import kotlin.math.absoluteValue
 
 const val serverUrl = "http://87.251.77.69:8000"
@@ -284,13 +285,13 @@ fun SelectGroup(navController: NavController) {
         var isReady by remember { mutableStateOf(false)}
         //getting data via makeRequest
         LaunchedEffect(true) {
-            val jsonHandler = Json{this.ignoreUnknownKeys = true}
 
-            val result = jsonHandler.decodeFromString<Map<String, List<String>>>(withContext(Dispatchers.IO){makeRequest("${serverUrl}/groups")})
-
-            for (i in 0 until result["groups"]!!.size) {
-                groupList.add(result["groups"]!![i])
+            val returnedString = withContext(Dispatchers.IO){makeRequest("${serverUrl}/groups")}
+            val groups = JSONObject(returnedString).getJSONArray("groups")
+            for (i in 0 until groups.length()) {
+                groupList.add(groups.getString(i))
             }
+
             isReady = true
         }
 
@@ -357,7 +358,9 @@ fun TimeTable(navController: NavController) {
     //getting group from sharedPreferences
     val sharedPreferences = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
     val group = sharedPreferences.getString("group", "ИСП9-123А").toString()
-    var decodedMap by remember { mutableStateOf<Map<String, List<String>>?>(null) }
+    val dailyTimetable = remember {
+        listOf(mutableStateListOf<String>(), mutableStateListOf<String>(), mutableStateListOf<String>(), mutableStateListOf<String>(), mutableStateListOf<String>(), mutableStateListOf<String>())
+    }
 
     val pagerState = rememberPagerState(pageCount = {
         weekDays.size
@@ -368,10 +371,13 @@ fun TimeTable(navController: NavController) {
                 "${serverUrl}/timetableV1/${group}/"
             )
         }
-        val jsonHandler = Json { this.ignoreUnknownKeys = true }
-        decodedMap = jsonHandler.decodeFromString<Map<String, List<String>>>(
-            resultTimetable
-        )
+        val resultJsonObj = JSONObject(resultTimetable)
+        for (i in 0 until resultJsonObj.length()) {
+            val resultJsonArray = resultJsonObj.getJSONArray(i.toString())
+            for (j in 0 until resultJsonArray.length()) {
+                dailyTimetable[i].add(resultJsonArray.getString(j))
+            }
+        }
     }
 
     Column(
@@ -416,113 +422,116 @@ fun TimeTable(navController: NavController) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (decodedMap != null) {
 
-            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
 
-                LazyColumn(
-                    modifier = Modifier,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(decodedMap?.get(page.toString())!!) {
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
 
-                        selectedDay = pagerState.currentPage
+            LazyColumn(
+                modifier = Modifier,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(dailyTimetable[page]) { it ->
 
-                        //getting text between ~ and #
-                        val regex = Regex("(?<=~)(.*?)(?=#)")
-                        val matchResult = regex.find(it)
-                        val classRoom = matchResult?.value?.replace(" ", "")?.replace("\n", "") ?: ""
+                    selectedDay = pagerState.currentPage
 
-                        when {
-                            "Конец" in it -> {}
-                            "Перемена" in it -> {
-                                Card(
-                                    colors = CardDefaults.cardColors(containerColor = cardGreen),
+                    //getting text between ~ and #
+                    val regex = Regex("(?<=~)(.*?)(?=#)")
+                    val matchResult = regex.find(it)
+                    val classRoom = matchResult?.value?.replace(" ", "")?.replace("\n", "") ?: ""
+
+                    when {
+                        "Конец" in it -> {}
+                        "Перемена" in it -> {
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = cardGreen),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(33.dp)
+
+                                    .animateItemPlacement(),
+                                border = BorderStroke(1.dp, Color.Transparent)
+                            ) {
+                                Text(
+                                    text = it,
+                                    fontFamily = sourceCodePro,
+                                    color = Color.Black,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(33.dp)
-
-                                        .animateItemPlacement(),
-                                    border = BorderStroke(1.dp, Color.Transparent)
-                                ) {
-                                    Text(
-                                        text = it,
-                                        fontFamily = sourceCodePro,
-                                        color = Color.Black,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier
-                                            .align(Alignment.CenterHorizontally)
-                                            .padding(top = 5.dp)
-                                    )
-                                }
+                                        .align(Alignment.CenterHorizontally)
+                                        .padding(top = 5.dp)
+                                )
                             }
+                        }
 
-                            else -> {
-                                Card(
-                                    colors = CardDefaults.cardColors(containerColor = grayCard),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(150.dp)
-                                        .animateItemPlacement(),
-                                    border = BorderStroke(1.dp, Color.Transparent)
-                                ) {
-                                    Row {
-                                        Box(
+                        else -> {
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = grayCard),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(150.dp)
+                                    .animateItemPlacement(),
+                                border = BorderStroke(1.dp, Color.Transparent)
+                            ) {
+                                Row {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(leftStripColor)
+                                            .size(width = 50.dp, height = 150.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(
+                                                id = (if ("Физическая культура" in it) {
+                                                    R.drawable.basketball
+                                                } else if ("Нет урока" in it) {
+                                                    R.drawable.disabled
+                                                } else {
+                                                    R.drawable.book
+                                                })
+                                            ),
+                                            contentDescription = "book",
                                             modifier = Modifier
-                                                .background(leftStripColor)
-                                                .size(width = 50.dp, height = 150.dp)
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(
-                                                    id = (if ("Физическая культура" in it) {
-                                                        R.drawable.basketball
-                                                    } else if ("Нет урока" in it) {
-                                                        R.drawable.disabled
-                                                    } else {
-                                                        R.drawable.book
-                                                    })
-                                                ),
-                                                contentDescription = "book",
-                                                modifier = Modifier
-                                                    .size(65.dp)
-                                                    .align(Alignment.TopCenter)
-                                                    .padding(top = 20.dp),
-                                                tint = Color.Gray
-                                            )
-                                            Text(
-                                                text = classRoom.replace("\n", "")
-                                                    .replace("/", "\n")
-                                                    .replace("None", ""),
-                                                fontFamily = sourceCodePro,
-                                                color = Color.Black,
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                textAlign = TextAlign.Justify,
-                                                modifier = Modifier
-                                                    .align(Alignment.BottomCenter)
-                                                    .padding(bottom = 15.dp)
-                                            )
+                                                .size(65.dp)
+                                                .align(Alignment.TopCenter)
+                                                .padding(top = 20.dp),
+                                            tint = Color.Gray
+                                        )
+                                        Text(
+                                            text = classRoom.replace("\n", "")
+                                                .replace("/", "\n")
+                                                .replace("None", ""),
+                                            fontFamily = sourceCodePro,
+                                            color = Color.Black,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Justify,
+                                            modifier = Modifier
+                                                .align(Alignment.BottomCenter)
+                                                .padding(bottom = 15.dp)
+                                        )
 
-                                        }
-                                        Box(modifier = Modifier.fillMaxSize()) {
-                                            Text(
-                                                text = it.split("~")[0],
-                                                fontFamily = sourceCodePro,
-                                                color = Color.White,
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.align(Alignment.TopStart).padding(start = 10.dp, top = 5.dp)
-                                            )
-                                            Text(
-                                                text = it.split("#")[1].replace(" ", ""),
-                                                fontFamily = sourceCodePro,
-                                                color = Color.White,
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.align(Alignment.BottomStart).padding(start = 10.dp, bottom = 5.dp)
-                                            )
-                                        }
+                                    }
+                                    Box(modifier = Modifier.fillMaxSize()) {
+                                        Text(
+                                            text = it.split("~")[0],
+                                            fontFamily = sourceCodePro,
+                                            color = Color.White,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier
+                                                .align(Alignment.TopStart)
+                                                .padding(start = 10.dp, top = 5.dp)
+                                        )
+                                        Text(
+                                            text = it.split("#")[1].replace(" ", ""),
+                                            fontFamily = sourceCodePro,
+                                            color = Color.White,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier
+                                                .align(Alignment.BottomStart)
+                                                .padding(start = 10.dp, bottom = 5.dp)
+                                        )
                                     }
                                 }
                             }

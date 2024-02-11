@@ -3,7 +3,6 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
     id ("io.sentry.android.gradle") version "4.2.0"
-    kotlin("plugin.serialization") version "1.9.21"
 }
 
 android {
@@ -53,7 +52,6 @@ android {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("androidx.compose.material3:material3:1.1.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("androidx.compose.ui:ui-util")
