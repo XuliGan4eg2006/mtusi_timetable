@@ -63,17 +63,31 @@ import com.example.mtusi_timetable.ui.theme.sourceCodePro
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import java.util.Calendar
+
+fun GetIndexDayOfWeek(): Int {
+    val calendar = Calendar.getInstance()
+    return calendar.get(Calendar.DAY_OF_WEEK)
+}
+fun getDayOfWeek(dayOffset: Int): String {
+    val calendar = Calendar.getInstance()
+    calendar.add(Calendar.DAY_OF_YEAR, dayOffset)
+
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+    val month = calendar.get(Calendar.MONTH) + 1 // Месяцы начинаются с 0, поэтому добавляем 1
+
+    return "$day.$month"
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeTable(navController: NavController) {
     val context = LocalContext.current
-
     var resultTimetable by remember { mutableStateOf(String()) }
 
     val weekDays = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
     var selectedDay by remember { mutableIntStateOf(0) }
-
     //getting group from sharedPreferences
     val sharedPreferences = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
     val group = sharedPreferences.getString("group", "ИСП9-123А").toString()
@@ -111,22 +125,39 @@ fun TimeTable(navController: NavController) {
                     )
                 }
             })
-        Spacer(modifier = Modifier.height(5.dp))
-        AnimatedContent(
-            targetState = selectedDay, transitionSpec = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(durationMillis = 1000)
-                ) togetherWith fadeOut()
-            },
-            label = "", contentAlignment = Alignment.Center
-        ) { targetIndex ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = cardGreen),
-                modifier = Modifier.padding(start = 10.dp)
-            ) {
+        Spacer(modifier = Modifier
+            .height(5.dp)
+            .fillMaxWidth())
+        Box(modifier = Modifier.fillMaxWidth()) {
+            AnimatedContent(
+                modifier = Modifier.align(Alignment.CenterStart),
+                targetState = selectedDay,
+                transitionSpec = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(durationMillis = 1000)
+                    ) togetherWith fadeOut()
+                },
+                label = "", contentAlignment = Alignment.Center
+            ) { targetIndex ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = cardGreen),
+                    modifier = Modifier.padding(start = 10.dp)
+                ) {
+                    Text(
+                        text = weekDays[targetIndex],
+                        color = Color.White,
+                        fontSize = 40.sp,
+                        modifier = Modifier.padding(start = 10.dp, end = 10.dp)
+                    )
+                }
+            }
+
+            Card(modifier = Modifier
+                .padding(end = 10.dp)
+                .align(Alignment.CenterEnd)) {
                 Text(
-                    text = weekDays[targetIndex],
+                    text = getDayOfWeek(selectedDay),
                     color = Color.White,
                     fontSize = 40.sp,
                     modifier = Modifier.padding(start = 10.dp, end = 10.dp)
@@ -137,7 +168,6 @@ fun TimeTable(navController: NavController) {
         Spacer(modifier = Modifier.height(8.dp))
 
         if (decodedMap != null) {
-
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
 
                 LazyColumn(
@@ -209,7 +239,7 @@ fun TimeTable(navController: NavController) {
                                                     .padding(top = 20.dp),
                                                 tint = Color.Gray
                                             )
-                                            Text(
+                                            Text( // class room
                                                 text = classRoom.replace("\n", "")
                                                     .replace("/", "\n")
                                                     .replace("None", ""),
@@ -225,22 +255,25 @@ fun TimeTable(navController: NavController) {
 
                                         }
                                         Box(modifier = Modifier.fillMaxSize()) {
-                                            Text(
+                                            Text( //class name
                                                 text = it.split("~")[0],
+                                                maxLines = 4,
                                                 fontFamily = sourceCodePro,
                                                 color = Color.White,
                                                 fontSize = 15.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.align(Alignment.TopStart)
+                                                modifier = Modifier
+                                                    .align(Alignment.TopStart)
                                                     .padding(start = 10.dp, top = 5.dp)
                                             )
-                                            Text(
+                                            Text(//class time
                                                 text = it.split("#")[1].replace(" ", ""),
                                                 fontFamily = sourceCodePro,
                                                 color = Color.White,
                                                 fontSize = 15.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.align(Alignment.BottomStart)
+                                                modifier = Modifier
+                                                    .align(Alignment.BottomStart)
                                                     .padding(start = 10.dp, bottom = 5.dp)
                                             )
                                         }
