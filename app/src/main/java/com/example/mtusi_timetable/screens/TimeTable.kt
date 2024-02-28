@@ -5,6 +5,7 @@ package com.example.mtusi_timetable.screens
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -29,9 +31,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -69,6 +73,7 @@ fun GetIndexDayOfWeek(): Int {
     val calendar = Calendar.getInstance()
     return calendar.get(Calendar.DAY_OF_WEEK)
 }
+
 fun getDayOfWeek(dayOffset: Int): String {
     val calendar = Calendar.getInstance()
     calendar.add(Calendar.DAY_OF_YEAR, dayOffset)
@@ -84,23 +89,30 @@ fun getDayOfWeek(dayOffset: Int): String {
 @Composable
 fun TimeTable(navController: NavController) {
     val context = LocalContext.current
-    var resultTimetable by remember { mutableStateOf(String()) }
 
     val weekDays = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
+
+    var resultTimetable by remember { mutableStateOf(String()) }
+    var decodedMap by remember { mutableStateOf<Map<String, List<String>>?>(null) }
     var selectedDay by remember { mutableIntStateOf(0) }
+    var isFailed by remember { mutableStateOf(false) }
     //getting group from sharedPreferences
     val sharedPreferences = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
     val group = sharedPreferences.getString("group", "ИСП9-123А").toString()
-    var decodedMap by remember { mutableStateOf<Map<String, List<String>>?>(null) }
 
     val pagerState = rememberPagerState(pageCount = {
         weekDays.size
     })
     LaunchedEffect(true) {
         resultTimetable = withContext(Dispatchers.IO) {
+            try {
             makeRequest(
                 "$serverUrl/timetableV1/${group}/"
-            )
+            )}
+            catch (e: Exception) {
+                isFailed = true
+                String()
+            }
         }
         val jsonHandler = Json { this.ignoreUnknownKeys = true }
         decodedMap = jsonHandler.decodeFromString<Map<String, List<String>>>(
@@ -166,8 +178,14 @@ fun TimeTable(navController: NavController) {
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
-        if (decodedMap != null) {
+        AnimatedVisibility(visible = isFailed) {
+            Text(text = "Ошибка при получении расписания",
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                fontFamily = sourceCodePro,
+                color = Color.White,
+                fontSize = 15.sp)
+        }
+        AnimatedVisibility(visible = decodedMap != null) {
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
 
                 LazyColumn(

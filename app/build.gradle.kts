@@ -14,8 +14,8 @@ android {
         applicationId = "com.rm_rf.mtusi_timetable"
         minSdk = 29
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "120"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
