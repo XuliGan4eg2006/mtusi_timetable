@@ -1,6 +1,6 @@
 # Mtusi timetable
 
-![Демонстрация](imgs/demo.gif)
+![Демонстрация](imgs/demo.webm)
 
 Mtusi timetable - это приложение, которое позволяет выбирать группу и просматривать расписание на каждый день. Приложение написано на Compose и Kotlin, а backend сервер на Python.
 
