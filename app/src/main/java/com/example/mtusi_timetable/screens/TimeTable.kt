@@ -84,6 +84,15 @@ fun getDayOfWeek(dayOffset: Int): String {
     return "$day.$month"
 }
 
+@Composable
+fun ErrorScreen(navController: NavController, loadInto: String){
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(backColor)){
+        Icon(painter = painterResource(id = R.drawable.baseline_error_24), contentDescription = "error")
+    }
+
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,17 +173,17 @@ fun TimeTable(navController: NavController) {
                     )
                 }
             }
-
-            Card(modifier = Modifier
-                .padding(end = 10.dp)
-                .align(Alignment.CenterEnd)) {
-                Text(
-                    text = getDayOfWeek(selectedDay),
-                    color = Color.White,
-                    fontSize = 40.sp,
-                    modifier = Modifier.padding(start = 10.dp, end = 10.dp)
-                )
-            }
+                // позорная реализация, мб потом переделаю
+//            Card(modifier = Modifier
+//                .padding(end = 10.dp)
+//                .align(Alignment.CenterEnd)) {
+//                Text(
+//                    text = getDayOfWeek(selectedDay),
+//                    color = Color.White,
+//                    fontSize = 40.sp,
+//                    modifier = Modifier.padding(start = 10.dp, end = 10.dp)
+//                )
+//            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))

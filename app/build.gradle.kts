@@ -53,8 +53,8 @@ android {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-    implementation("androidx.compose.material3:material3:1.1.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("androidx.compose.material3:material3:1.2.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("androidx.compose.ui:ui-util")
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
@@ -67,8 +67,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("com.google.firebase:firebase-messaging-ktx:23.4.0")
-    implementation("androidx.navigation:navigation-compose:2.7.6")
+    implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("com.google.android.material:material:1.11.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
