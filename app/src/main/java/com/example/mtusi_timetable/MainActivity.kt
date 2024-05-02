@@ -70,14 +70,14 @@ fun MainScreen() {
         .fillMaxSize()
         .background(backColor)) {
 
-        if (!checkNetwork(context = context)) {
-            startScreen = "CheckNetwork"
+        startScreen = if (!checkNetwork(context = context)) {
+            "CheckNetwork"
         } else {
             val sharedPreferences =
                 LocalContext.current.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
             val group = sharedPreferences.getString("group", "none").toString()
 
-            startScreen = if (group == "none") {
+            if (group == "none") {
                 "HelloScreen"
             } else {
                 "TimeTable"
