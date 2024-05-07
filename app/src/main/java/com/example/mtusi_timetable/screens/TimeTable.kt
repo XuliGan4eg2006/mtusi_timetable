@@ -110,6 +110,7 @@ fun TimeTable(navController: NavController) {
                 String()
             }
         }
+
         val jsonHandler = Json { this.ignoreUnknownKeys = true }
         decodedMap = jsonHandler.decodeFromString<Map<String, List<String>>>(
             resultTimetable
@@ -188,110 +189,116 @@ fun TimeTable(navController: NavController) {
                     modifier = Modifier,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    println(decodedMap)
                     items(decodedMap?.get(page.toString())!!) {
+                        println(it)
+                        if (it.isEmpty()){
+                            Text(text = "Сегодня пар нет ¯\\_(ツ)_/¯",
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                fontFamily = sourceCodePro,
+                                color = Color.White,
+                                fontSize = 15.sp)
+                        }
+                        else {
+                            selectedDay = pagerState.currentPage
+                            //getting text between ~ and #
+                            val regex = Regex("(?<=~)(.*?)(?=#)")
+                            val matchResult = regex.find(it)
+                            val classRoom =
+                                matchResult?.value?.replace(" ", "")?.replace("\n", "") ?: ""
 
-                        selectedDay = pagerState.currentPage
-
-                        //getting text between ~ and #
-                        val regex = Regex("(?<=~)(.*?)(?=#)")
-                        val matchResult = regex.find(it)
-                        val classRoom =
-                            matchResult?.value?.replace(" ", "")?.replace("\n", "") ?: ""
-
-                        when {
-                            "Конец" in it -> {}
-                            "Нет урока" in it -> {}
-                            "Перемена" in it -> {
-                                Card(
-                                    colors = CardDefaults.cardColors(containerColor = cardGreen),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(33.dp),
-                                    border = BorderStroke(1.dp, Color.Transparent)
-                                ) {
-                                    Text(
-                                        text = it,
-                                        fontFamily = sourceCodePro,
-                                        color = Color.Black,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
+                            when {
+                                "Конец" in it -> {}
+                                "Перемена" in it -> {
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = cardGreen),
                                         modifier = Modifier
-                                            .align(Alignment.CenterHorizontally)
-                                            .padding(top = 5.dp)
-                                    )
-                                }
-                            }
-
-                            else -> {
-                                Card(
-                                    colors = CardDefaults.cardColors(containerColor = backColorTEst),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(150.dp)
-                                        .padding(start = 5.dp, end = 5.dp),
-                                    border = BorderStroke(3.dp, primaryTest),
-                                ) {
-                                    Row {
-                                        Box(
+                                            .fillMaxWidth()
+                                            .height(33.dp),
+                                        border = BorderStroke(1.dp, Color.Transparent)
+                                    ) {
+                                        Text(
+                                            text = it,
+                                            fontFamily = sourceCodePro,
+                                            color = Color.Black,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
                                             modifier = Modifier
-                                                .background(leftStripColor)
-                                                .size(width = 50.dp, height = 150.dp)
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(
-                                                    id = (if ("Физическая культура" in it) {
-                                                        R.drawable.basketball
-                                                    } else if ("Нет урока" in it) {
-                                                        R.drawable.disabled
-                                                    } else {
-                                                        R.drawable.book
-                                                    })
-                                                ),
-                                                contentDescription = "book",
-                                                modifier = Modifier
-                                                    .size(65.dp)
-                                                    .align(Alignment.TopCenter)
-                                                    .padding(top = 20.dp),
-                                                tint = Color.Gray
-                                            )
-                                            Text( // class room
-                                                text = classRoom.replace("\n", "")
-                                                    .replace("/", "\n")
-                                                    .replace("None", ""),
-                                                fontFamily = sourceCodePro,
-                                                color = Color.Black,
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                textAlign = TextAlign.Justify,
-                                                modifier = Modifier
-                                                    .align(Alignment.BottomCenter)
-                                                    .padding(bottom = 15.dp)
-                                            )
+                                                .align(Alignment.CenterHorizontally)
+                                                .padding(top = 5.dp)
+                                        )
+                                    }
+                                }
 
-                                        }
-                                        Box(modifier = Modifier.fillMaxSize()) {
-                                            Text( //class name
-                                                text = it.split("~")[0],
-                                                maxLines = 4,
-                                                fontFamily = sourceCodePro,
-                                                color = Color.White,
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold,
+                                else -> {
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = backColorTEst),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(150.dp)
+                                            .padding(start = 5.dp, end = 5.dp),
+                                        border = BorderStroke(3.dp, primaryTest),
+                                    ) {
+                                        Row {
+                                            Box(
                                                 modifier = Modifier
-                                                    .align(Alignment.TopStart)
-                                                    .padding(start = 10.dp, top = 5.dp)
-                                            )
-                                            Text(//class time
-                                                text = "class_time",
-                                                fontFamily = sourceCodePro,
-                                                color = Color.White,
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier
-                                                    .align(Alignment.BottomStart)
-                                                    .padding(start = 10.dp, bottom = 5.dp)
-                                            )
+                                                    .background(leftStripColor)
+                                                    .size(width = 50.dp, height = 150.dp)
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(
+                                                        id = (if ("Физическая культура" in it) {
+                                                            R.drawable.basketball
+                                                        } else if ("Нет урока" in it) {
+                                                            R.drawable.disabled
+                                                        } else {
+                                                            R.drawable.book
+                                                        })
+                                                    ),
+                                                    contentDescription = "book",
+                                                    modifier = Modifier
+                                                        .size(65.dp)
+                                                        .align(Alignment.TopCenter)
+                                                        .padding(top = 20.dp),
+                                                    tint = Color.Gray
+                                                )
+                                                Text( // class room
+                                                    text = classRoom.replace("\n", "")
+                                                        .replace("/", "\n")
+                                                        .replace("None", ""),
+                                                    fontFamily = sourceCodePro,
+                                                    color = Color.Black,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Justify,
+                                                    modifier = Modifier
+                                                        .align(Alignment.BottomCenter)
+                                                        .padding(bottom = 15.dp)
+                                                )
+
+                                            }
+                                            Box(modifier = Modifier.fillMaxSize()) {
+                                                Text( //class name
+                                                    text = it.split("~")[0],
+                                                    maxLines = 4,
+                                                    fontFamily = sourceCodePro,
+                                                    color = Color.White,
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier
+                                                        .align(Alignment.TopStart)
+                                                        .padding(start = 10.dp, top = 5.dp)
+                                                )
+                                                Text(//class time
+                                                    text = "class_time",
+                                                    fontFamily = sourceCodePro,
+                                                    color = Color.White,
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier
+                                                        .align(Alignment.BottomStart)
+                                                        .padding(start = 10.dp, bottom = 5.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
