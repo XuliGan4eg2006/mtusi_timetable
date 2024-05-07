@@ -18,3 +18,5 @@ val telegramColor = Color(0xFF2AABEE)
 
 val logoColor1 = Color(0xFF00A3FF)
 val logoColor2 = Color(0xFF00DD9C)
+val backColorTEst = Color(0xFF224945)
+val primaryTest = Color(0xFF00ff7f)

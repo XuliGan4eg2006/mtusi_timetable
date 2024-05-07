@@ -60,29 +60,16 @@ import com.example.mtusi_timetable.R
 import com.example.mtusi_timetable.makeRequest
 import com.example.mtusi_timetable.serverUrl
 import com.example.mtusi_timetable.ui.theme.backColor
+import com.example.mtusi_timetable.ui.theme.backColorTEst
 import com.example.mtusi_timetable.ui.theme.cardGreen
 import com.example.mtusi_timetable.ui.theme.grayCard
 import com.example.mtusi_timetable.ui.theme.leftStripColor
+import com.example.mtusi_timetable.ui.theme.primaryTest
 import com.example.mtusi_timetable.ui.theme.sourceCodePro
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.util.Calendar
-
-fun GetIndexDayOfWeek(): Int {
-    val calendar = Calendar.getInstance()
-    return calendar.get(Calendar.DAY_OF_WEEK)
-}
-
-fun getDayOfWeek(dayOffset: Int): String {
-    val calendar = Calendar.getInstance()
-    calendar.add(Calendar.DAY_OF_YEAR, dayOffset)
-
-    val day = calendar.get(Calendar.DAY_OF_MONTH)
-    val month = calendar.get(Calendar.MONTH) + 1 // Месяцы начинаются с 0, поэтому добавляем 1
-
-    return "$day.$month"
-}
 
 @Composable
 fun ErrorScreen(navController: NavController, loadInto: String){
@@ -116,7 +103,7 @@ fun TimeTable(navController: NavController) {
         resultTimetable = withContext(Dispatchers.IO) {
             try {
             makeRequest(
-                "$serverUrl/timetableV1/${group}/"
+                "$serverUrl/timetable/${group}/"
             )}
             catch (e: Exception) {
                 isFailed = true
@@ -132,11 +119,11 @@ fun TimeTable(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backColor)
+            .background(backColorTEst)
     ) {
 
         TopAppBar(title = { Text(text = "КТ МТУСИ РАСПИСАНИЕ", color = Color.White) },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = backColor), actions = {
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = backColorTEst), actions = {
                 IconButton(onClick = {
                     navController.navigate("InfoScreen")
                 }) {
@@ -201,6 +188,7 @@ fun TimeTable(navController: NavController) {
                     modifier = Modifier,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    println(decodedMap)
                     items(decodedMap?.get(page.toString())!!) {
 
                         selectedDay = pagerState.currentPage
@@ -213,6 +201,7 @@ fun TimeTable(navController: NavController) {
 
                         when {
                             "Конец" in it -> {}
+                            "Нет урока" in it -> {}
                             "Перемена" in it -> {
                                 Card(
                                     colors = CardDefaults.cardColors(containerColor = cardGreen),
@@ -236,12 +225,12 @@ fun TimeTable(navController: NavController) {
 
                             else -> {
                                 Card(
-                                    colors = CardDefaults.cardColors(containerColor = grayCard),
+                                    colors = CardDefaults.cardColors(containerColor = backColorTEst),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(150.dp)
                                         .padding(start = 5.dp, end = 5.dp),
-                                    border = BorderStroke(1.dp, Color.Transparent)
+                                    border = BorderStroke(3.dp, primaryTest),
                                 ) {
                                     Row {
                                         Box(
@@ -294,7 +283,7 @@ fun TimeTable(navController: NavController) {
                                                     .padding(start = 10.dp, top = 5.dp)
                                             )
                                             Text(//class time
-                                                text = it.split("#")[1].replace(" ", ""),
+                                                text = "class_time",
                                                 fontFamily = sourceCodePro,
                                                 color = Color.White,
                                                 fontSize = 15.sp,

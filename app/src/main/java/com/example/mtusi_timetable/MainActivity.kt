@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,12 +33,12 @@ import com.example.mtusi_timetable.screens.TimeTable
 import com.example.mtusi_timetable.ui.theme.Mtusi_timetableTheme
 import com.example.mtusi_timetable.ui.theme.backColor
 
-const val serverUrl = "http://87.251.77.69:8000"
+const val serverUrl = "http://93.185.156.128:8000"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        enableEdgeToEdge()  //for transparent status bar
         setContent {
             Mtusi_timetableTheme {
                 MainScreen()

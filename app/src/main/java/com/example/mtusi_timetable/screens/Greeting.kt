@@ -37,7 +37,9 @@ import androidx.navigation.NavController
 import com.example.mtusi_timetable.R
 import com.example.mtusi_timetable.checkNotificationPermission
 import com.example.mtusi_timetable.ui.theme.backColor
+import com.example.mtusi_timetable.ui.theme.backColorTEst
 import com.example.mtusi_timetable.ui.theme.leftStripColor
+import com.example.mtusi_timetable.ui.theme.primaryTest
 import com.example.mtusi_timetable.ui.theme.sourceCodePro
 import com.example.mtusi_timetable.ui.theme.telegramColor
 import com.google.android.gms.tasks.OnCompleteListener
@@ -53,7 +55,7 @@ fun Greeting(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backColor)
+            .background(backColorTEst)
     ) {
 
         val pagerState = rememberPagerState(pageCount = { 2 })
@@ -82,7 +84,7 @@ fun Greeting(navController: NavController) {
                     Text(
                         text = "Добро пожаловать в открытый бета тест первого приложения для рассписания КТ МТУСИ\n\nПожалуйста, разрешите уведомления на следующем экране, чтобы получать уведомления о заменах и событиях колледжа",
                         fontFamily = sourceCodePro,
-                        color = Color.White,
+                        color = primaryTest,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
@@ -95,7 +97,7 @@ fun Greeting(navController: NavController) {
                     Button(modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(top = 10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = leftStripColor),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryTest),
                         onClick = {
                             coroutineScope.launch {
                                 pagerState.animateScrollToPage(1)
