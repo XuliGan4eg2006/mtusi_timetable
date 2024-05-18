@@ -33,7 +33,7 @@ import com.example.mtusi_timetable.screens.TimeTable
 import com.example.mtusi_timetable.ui.theme.Mtusi_timetableTheme
 import com.example.mtusi_timetable.ui.theme.backColor
 
-const val serverUrl = "http://93.185.156.128:8000"
+const val serverUrl = "http://192.168.1.12:8000"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

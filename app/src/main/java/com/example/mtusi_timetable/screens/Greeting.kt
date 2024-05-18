@@ -1,6 +1,7 @@
 package com.example.mtusi_timetable.screens
 
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
@@ -16,9 +17,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -37,17 +45,18 @@ import androidx.navigation.NavController
 import com.example.mtusi_timetable.R
 import com.example.mtusi_timetable.checkNotificationPermission
 import com.example.mtusi_timetable.ui.theme.backColor
-import com.example.mtusi_timetable.ui.theme.backColorTEst
+import com.example.mtusi_timetable.ui.theme.cardGreen
 import com.example.mtusi_timetable.ui.theme.leftStripColor
 import com.example.mtusi_timetable.ui.theme.primaryTest
 import com.example.mtusi_timetable.ui.theme.sourceCodePro
 import com.example.mtusi_timetable.ui.theme.telegramColor
+import com.example.mtusi_timetable.ui.theme.textColor
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun Greeting(navController: NavController) {
     val context = LocalContext.current
@@ -55,8 +64,10 @@ fun Greeting(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backColorTEst)
+            .background(backColor)
     ) {
+        TopAppBar(title = { Text(text = "КТ МТУСИ РАСПИСАНИЕ", color = Color.White) },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = backColor))
 
         val pagerState = rememberPagerState(pageCount = { 2 })
 
@@ -84,7 +95,7 @@ fun Greeting(navController: NavController) {
                     Text(
                         text = "Добро пожаловать в открытый бета тест первого приложения для рассписания КТ МТУСИ\n\nПожалуйста, разрешите уведомления на следующем экране, чтобы получать уведомления о заменах и событиях колледжа",
                         fontFamily = sourceCodePro,
-                        color = primaryTest,
+                        color = textColor,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
@@ -97,7 +108,7 @@ fun Greeting(navController: NavController) {
                     Button(modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(top = 10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = primaryTest),
+                        colors = ButtonDefaults.buttonColors(containerColor = cardGreen),
                         onClick = {
                             coroutineScope.launch {
                                 pagerState.animateScrollToPage(1)
@@ -106,7 +117,7 @@ fun Greeting(navController: NavController) {
 
                         Text(
                             text = "Поехали!",
-                            color = Color.White,
+                            color = textColor,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.align(Alignment.CenterVertically),
@@ -143,6 +154,13 @@ fun Greeting(navController: NavController) {
 
                         // Get new FCM registration token
                         val token = task.result
+
+                        val sharedPreferences =
+                            context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+                        val editor = sharedPreferences.edit()
+                        editor.putString("fcm_token", token.toString())
+                        editor.apply()
+
                         Log.w(ContentValues.TAG, token.toString())
                     })
 
@@ -158,7 +176,7 @@ fun Greeting(navController: NavController) {
                     Text(
                         text = "Отлично, на следующем экране выберите вашу группу (позже вы сможете изменить её в настройках) \n\nЕсли вы нашли баг/недочёт или столкнулись с другой иной проблемой, пожалуйста, свяжитесь со мной через",
                         fontFamily = sourceCodePro,
-                        color = Color.White,
+                        color = textColor,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -187,11 +205,11 @@ fun Greeting(navController: NavController) {
                     Button(modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(top = 10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = leftStripColor),
+                        colors = ButtonDefaults.buttonColors(containerColor = cardGreen),
                         onClick = { navController.navigate("SelectGroup") }) {
                         Text(
                             text = "Начать пользоваться",
-                            color = Color.White,
+                            color = textColor,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.align(Alignment.CenterVertically),

@@ -28,11 +28,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.mtusi_timetable.R
 import com.example.mtusi_timetable.ui.theme.backColor
+import com.example.mtusi_timetable.ui.theme.cardGreen
 import com.example.mtusi_timetable.ui.theme.leftStripColor
 import com.example.mtusi_timetable.ui.theme.logoColor1
 import com.example.mtusi_timetable.ui.theme.logoColor2
+import com.example.mtusi_timetable.ui.theme.primaryTest
 import com.example.mtusi_timetable.ui.theme.sourceCodePro
 import com.example.mtusi_timetable.ui.theme.telegramColor
+import com.example.mtusi_timetable.ui.theme.textColor
 
 @Composable
 fun InfoScreen(navController: NavController) {
@@ -65,7 +68,7 @@ fun InfoScreen(navController: NavController) {
                     }
                 },
                 fontFamily = sourceCodePro,
-                color = Color.White,
+                color = textColor,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -85,7 +88,7 @@ fun InfoScreen(navController: NavController) {
                 }) {
                 Text(
                     text = "Написать мне",
-                    color = Color.White,
+                    color = textColor,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.CenterVertically),
@@ -96,11 +99,11 @@ fun InfoScreen(navController: NavController) {
             Button(modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(top = 10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = leftStripColor),
+                colors = ButtonDefaults.buttonColors(containerColor = cardGreen),
                 onClick = { navController.navigate("Timetable") }) {
                 Text(
                     text = "Вернуться к расписанию",
-                    color = Color.White,
+                    color = textColor,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.CenterVertically),
@@ -110,11 +113,11 @@ fun InfoScreen(navController: NavController) {
             Button(modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(top = 10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = leftStripColor),
+                colors = ButtonDefaults.buttonColors(containerColor = cardGreen),
                 onClick = { navController.navigate("SelectGroup") }) {
                 Text(
                     text = "Выбрать группу",
-                    color = Color.White,
+                    color = textColor,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.CenterVertically),

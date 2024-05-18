@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -32,6 +33,8 @@ import androidx.navigation.NavController
 import com.example.mtusi_timetable.makeRequest
 import com.example.mtusi_timetable.serverUrl
 import com.example.mtusi_timetable.ui.theme.backColor
+import com.example.mtusi_timetable.ui.theme.cardGreen
+import com.example.mtusi_timetable.ui.theme.textColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -98,17 +101,31 @@ fun SelectGroup(navController: NavController) {
                     }
                 }
 
-                Button(modifier = Modifier.padding(top = 70.dp), onClick = {
-                    val sharedPreferences =
-                        context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
-                    val editor = sharedPreferences.edit()
-                    editor.putString("group", groupList[selectedIndex])
-                    editor.apply()
-                    Log.i("groupUpdated", groupList[selectedIndex])
-                    Toast.makeText(context, "Group Updated", Toast.LENGTH_SHORT).show()
-                    navController.navigate("TimeTable")
-                }) {
-                    Text(text = "Продолжить")
+                Button(modifier = Modifier.padding(top = 70.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = cardGreen),
+                    onClick = {
+                        val sharedPreferences =
+                            context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+                        val editor = sharedPreferences.edit()
+                        editor.putString("group", groupList[selectedIndex])
+                        editor.apply()
+
+
+                        Thread {
+                            makeRequest(
+                                "$serverUrl/insert_token/${
+                                    sharedPreferences.getString(
+                                        "fcm_token",
+                                        ""
+                                    ) + "|" + groupList[selectedIndex]
+                                }")
+                        }.start()
+
+                        Log.i("groupUpdated", groupList[selectedIndex])
+                        Toast.makeText(context, "Group Updated", Toast.LENGTH_SHORT).show()
+                        navController.navigate("TimeTable")
+                    }) {
+                    Text(text = "Продолжить", color = textColor)
                 }
             }
         }
