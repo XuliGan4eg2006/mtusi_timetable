@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -31,11 +30,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -61,7 +58,6 @@ import com.example.mtusi_timetable.makeRequest
 import com.example.mtusi_timetable.serverUrl
 import com.example.mtusi_timetable.ui.theme.backColor
 import com.example.mtusi_timetable.ui.theme.cardGreen
-import com.example.mtusi_timetable.ui.theme.grayCard
 import com.example.mtusi_timetable.ui.theme.leftStripColor
 import com.example.mtusi_timetable.ui.theme.primaryTest
 import com.example.mtusi_timetable.ui.theme.sourceCodePro
@@ -69,7 +65,6 @@ import com.example.mtusi_timetable.ui.theme.textColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import java.util.Calendar
 
 @Composable
 fun ErrMessage() {
@@ -193,9 +188,8 @@ fun TimeTable(navController: NavController) {
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     try {
-                        items(decodedMap?.get(page.toString())!!) {
-                            println(it)
-                            if (it.isEmpty()) {
+                        item{
+                            if (decodedMap?.get(page.toString())!!.isEmpty()) {
                                 Text(
                                     text = "Сегодня пар нет ¯\\_(ツ)_/¯",
                                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -203,108 +197,109 @@ fun TimeTable(navController: NavController) {
                                     color = Color.White,
                                     fontSize = 15.sp
                                 )
-                            } else {
-                                selectedDay = pagerState.currentPage
-                                //getting text between ~ and #
-                                val regex = Regex("(?<=~)(.*?)(?=#)")
-                                val matchResult = regex.find(it)
-                                val classRoom =
-                                    matchResult?.value?.replace(" ", "")?.replace("\n", "") ?: ""
+                            }
+                        }
+                        items(decodedMap?.get(page.toString())!!) {
+                            selectedDay = pagerState.currentPage
+                            //getting text between ~ and #
+                            val regex = Regex("(?<=~)(.*?)(?=#)")
+                            val matchResult = regex.find(it)
+                            val classRoom =
+                                matchResult?.value?.replace(" ", "")?.replace("\n", "") ?: ""
 
-                                when {
-                                    "Конец" in it -> {}
-                                    "Перемена" in it -> {
-                                        Card(
-                                            colors = CardDefaults.cardColors(containerColor = cardGreen),
+                            when {
+                                "Конец" in it -> {}
+                                "Перемена" in it -> {
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = cardGreen),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(33.dp),
+                                        border = BorderStroke(1.dp, Color.Transparent)
+                                    ) {
+                                        Text(
+                                            text = it,
+                                            fontFamily = sourceCodePro,
+                                            color = Color.Black,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
                                             modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(33.dp),
-                                            border = BorderStroke(1.dp, Color.Transparent)
-                                        ) {
-                                            Text(
-                                                text = it,
-                                                fontFamily = sourceCodePro,
-                                                color = Color.Black,
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier
-                                                    .align(Alignment.CenterHorizontally)
-                                                    .padding(top = 5.dp)
-                                            )
-                                        }
+                                                .align(Alignment.CenterHorizontally)
+                                                .padding(top = 5.dp)
+                                        )
                                     }
+                                }
 
-                                    else -> {
-                                        Card(
-                                            // lesson card
-                                            colors = CardDefaults.cardColors(containerColor = backColor),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(150.dp)
-                                                .padding(start = 5.dp, end = 5.dp),
-                                            border = BorderStroke(1.dp, primaryTest),
-                                        ) {
-                                            Row {
-                                                Box( //box with icon and class room
+                                else -> {
+                                    Card(
+                                        // lesson card
+                                        colors = CardDefaults.cardColors(containerColor = backColor),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(150.dp)
+                                            .padding(start = 5.dp, end = 5.dp),
+                                        border = BorderStroke(1.dp, primaryTest),
+                                    ) {
+                                        Row {
+                                            Box( //box with icon and class room
+                                                modifier = Modifier
+                                                    .background(leftStripColor)
+                                                    .size(width = 50.dp, height = 150.dp)
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(
+                                                        id = (if ("Физическая культура" in it) {
+                                                            R.drawable.basketball
+                                                        } else if ("Нет урока" in it) {
+                                                            R.drawable.disabled
+                                                        } else {
+                                                            R.drawable.book
+                                                        })
+                                                    ),
+                                                    contentDescription = "book",
                                                     modifier = Modifier
-                                                        .background(leftStripColor)
-                                                        .size(width = 50.dp, height = 150.dp)
-                                                ) {
-                                                    Icon(
-                                                        painter = painterResource(
-                                                            id = (if ("Физическая культура" in it) {
-                                                                R.drawable.basketball
-                                                            } else if ("Нет урока" in it) {
-                                                                R.drawable.disabled
-                                                            } else {
-                                                                R.drawable.book
-                                                            })
-                                                        ),
-                                                        contentDescription = "book",
-                                                        modifier = Modifier
-                                                            .size(65.dp)
-                                                            .align(Alignment.TopCenter)
-                                                            .padding(top = 20.dp),
-                                                        tint = Color.Gray
-                                                    )
-                                                    Text( // class room
-                                                        text = classRoom.replace("\n", "")
-                                                            .replace("/", "\n")
-                                                            .replace("None", ""),
-                                                        fontFamily = sourceCodePro,
-                                                        color = Color.Black,
-                                                        fontSize = 13.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        textAlign = TextAlign.Justify,
-                                                        modifier = Modifier
-                                                            .align(Alignment.BottomCenter)
-                                                            .padding(bottom = 15.dp)
-                                                    )
+                                                        .size(65.dp)
+                                                        .align(Alignment.TopCenter)
+                                                        .padding(top = 20.dp),
+                                                    tint = Color.Gray
+                                                )
+                                                Text( // class room
+                                                    text = classRoom.replace("\n", "")
+                                                        .replace("/", "\n")
+                                                        .replace("None", ""),
+                                                    fontFamily = sourceCodePro,
+                                                    color = Color.Black,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Justify,
+                                                    modifier = Modifier
+                                                        .align(Alignment.BottomCenter)
+                                                        .padding(bottom = 15.dp)
+                                                )
 
-                                                }
-                                                Box(modifier = Modifier.fillMaxSize()) {
-                                                    Text( //class name
-                                                        text = it.split("~")[0],
-                                                        maxLines = 4,
-                                                        fontFamily = sourceCodePro,
-                                                        color = textColor,
-                                                        fontSize = 15.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        modifier = Modifier
-                                                            .align(Alignment.TopStart)
-                                                            .padding(start = 10.dp, top = 5.dp)
-                                                    )
-                                                    Text(//class time
-                                                        text = "class_time",
-                                                        fontFamily = sourceCodePro,
-                                                        color = Color.White,
-                                                        fontSize = 15.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        modifier = Modifier
-                                                            .align(Alignment.BottomStart)
-                                                            .padding(start = 10.dp, bottom = 5.dp)
-                                                    )
-                                                }
+                                            }
+                                            Box(modifier = Modifier.fillMaxSize()) {
+                                                Text( //class name
+                                                    text = it.split("~")[0],
+                                                    maxLines = 4,
+                                                    fontFamily = sourceCodePro,
+                                                    color = textColor,
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier
+                                                        .align(Alignment.TopStart)
+                                                        .padding(start = 10.dp, top = 5.dp)
+                                                )
+                                                Text(//class time
+                                                    text = "class_time",
+                                                    fontFamily = sourceCodePro,
+                                                    color = Color.White,
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier
+                                                        .align(Alignment.BottomStart)
+                                                        .padding(start = 10.dp, bottom = 5.dp)
+                                                )
                                             }
                                         }
                                     }
