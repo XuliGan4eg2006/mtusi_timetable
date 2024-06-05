@@ -35,7 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
-const val serverUrl = "http://MacBook-Pro-MaKich.local:8000"
+const val serverUrl = "http://192.168.0.156:8000"
 
 
 class MainActivity : ComponentActivity() {
@@ -82,17 +82,19 @@ fun MainScreen() {
         startScreen = "CheckNetwork"
     }
 
-    LaunchedEffect(key1 = networkAvailable) {
-        withContext(Dispatchers.IO){
-            val retAppVerJson = makeRequest("$serverUrl/app_version")
-            val jsonHandler = Json { this.ignoreUnknownKeys = true }
-            val decodedMap = jsonHandler.decodeFromString<Map<String, Int>>(
-                retAppVerJson
-            )
-            println("Actual version: ${decodedMap["actual_version"]}")
+    LaunchedEffect(key1 = true) {
+        if (networkAvailable) {
+            withContext(Dispatchers.IO) {
+                val retAppVerJson = makeRequest("$serverUrl/app_version")
+                val jsonHandler = Json { this.ignoreUnknownKeys = true }
+                val decodedMap = jsonHandler.decodeFromString<Map<String, Int>>(
+                    retAppVerJson
+                )
+                println("Actual version: ${decodedMap["actual_version"]}")
 
-            appActualVersion = decodedMap["actual_version"]!!.toInt()
-            isReady = true
+                appActualVersion = decodedMap["actual_version"]!!.toInt()
+                isReady = true
+            }
         }
     }
 
@@ -119,6 +121,7 @@ fun MainScreen() {
     }
 
     NavHost(navController = navController, startDestination = startScreen) {
+        composable("MainScreen") { MainScreen() }
         composable("UpdateMe") { UpdateMe(appVersion) }
         composable("LoadingScreen") { LoadingScreen() }
         composable("HelloScreen") { Greeting(navController = navController) }
