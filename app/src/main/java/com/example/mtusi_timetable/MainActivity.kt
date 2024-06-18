@@ -28,14 +28,16 @@ import com.example.mtusi_timetable.screens.Greeting
 import com.example.mtusi_timetable.screens.InfoScreen
 import com.example.mtusi_timetable.screens.LoadingScreen
 import com.example.mtusi_timetable.screens.SelectGroup
+import com.example.mtusi_timetable.screens.ServerDown
 import com.example.mtusi_timetable.screens.TimeTable
 import com.example.mtusi_timetable.screens.UpdateMe
 import com.example.mtusi_timetable.ui.theme.Mtusi_timetableTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import java.io.IOException
 
-const val serverUrl = "http://192.168.0.156:8000"
+const val serverUrl = "http://MacBook-Pro-MaKich.local:8000"
 
 
 class MainActivity : ComponentActivity() {
@@ -85,21 +87,25 @@ fun MainScreen() {
     LaunchedEffect(key1 = true) {
         if (networkAvailable) {
             withContext(Dispatchers.IO) {
-                val retAppVerJson = makeRequest("$serverUrl/app_version")
-                val jsonHandler = Json { this.ignoreUnknownKeys = true }
-                val decodedMap = jsonHandler.decodeFromString<Map<String, Int>>(
-                    retAppVerJson
-                )
-                println("Actual version: ${decodedMap["actual_version"]}")
+                try {
+                    val retAppVerJson = makeRequest("$serverUrl/app_version")
+                    val jsonHandler = Json { this.ignoreUnknownKeys = true }
+                    val decodedMap = jsonHandler.decodeFromString<Map<String, Int>>(
+                        retAppVerJson
+                    )
+                    println("Actual version: ${decodedMap["actual_version"]}")
 
-                appActualVersion = decodedMap["actual_version"]!!.toInt()
-                isReady = true
+                    appActualVersion = decodedMap["actual_version"]!!.toInt()
+                    isReady = true
+                } catch (_: IOException) {
+                    startScreen = "ServerDown"
+                }
             }
         }
     }
 
 
-    if (startScreen != "CheckNetwork") {
+    if (startScreen !in listOf("ServerDown", "CheckNetwork")) {
 
         val sharedPreferences =
             context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
@@ -129,6 +135,7 @@ fun MainScreen() {
         composable("TimeTable") { TimeTable(navController = navController) }
         composable("InfoScreen") { InfoScreen(navController = navController) }
         composable("CheckNetwork"){ CheckNetConn(navController = navController)}
+        composable("ServerDown"){ ServerDown(navController = navController) }
     }
 }
 
