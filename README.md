@@ -16,7 +16,7 @@ Mtusi timetable - это приложение, которое позволяет
 
 - Compose
 - Kotlin
-- Python (server, link will be here)
+- Python [(server, link here)](https://github.com/XuliGan4eg2006/timetable_parser)
 
 ## Авторы
 
